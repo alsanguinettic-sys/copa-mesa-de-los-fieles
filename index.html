@@ -194,7 +194,7 @@ var S={
   server:{rounds:{},courses:{},config:{},extras:{}},
   pending:{}, draft:{}, draftAj:null,
   ui:{tab:"posiciones",day:defaultDay(),hole:1},
-  sync:"connecting", remote:false, readOnly:false, store:null, fresh:false
+  sync:"connecting", remote:false, readOnly:false, store:null, fresh:false, me:null, key:null, links:null
 };
 
 function defaultDay(){var n=new Date(),m=n.getMonth()+1,d=n.getDate();if(m===11&&d===8)return"d2";if(m===11&&d>=9)return"d3";return"d1";}
@@ -205,6 +205,9 @@ function moneyS(n){return(n<0?"\u2212":"+")+money(Math.abs(n));}
 function f1(n){return(Math.round(n*10)/10).toString().replace(".",",");}
 function dayById(id){return DAYS.filter(function(d){return d.id===id;})[0];}
 function playerById(id){return PLAYERS.filter(function(p){return p.id===id;})[0];}
+var MARKS={angel:"fede",fede:"mauri",mauri:"angel"};
+function isAdmin(){return !!(S.me&&S.me.admin);}
+function canEdit(pid){return !!(S.me&&(S.me.admin||S.me.player===pid||S.me.marks===pid));}
 
 /* ---------- preferencias por dispositivo ---------- */
 try{var u=JSON.parse(localStorage.getItem("copa-ui")||"{}");
@@ -230,13 +233,13 @@ function makeLocal(){var L={},mem={};
     update:function(c,id,d){var o=load(c);o[id]=merge(o[id]||{},d);save(c,o);emit(c);return Promise.resolve();}};}
 
 var SB_URL="https://ggingrhgxniedrjesbpe.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdnaW5ncmhneG5pZWRyamVzYnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5OTA3OTksImV4cCI6MjEwOTU2Njc5OX0.C8_DKAXdD7cv68jk0YoBBpwydQfjf3oDKBoWk3K1WIc",POLL_MS=4000;
+function rpc(fn,args){
+  return fetch(SB_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(args)}).then(function(r){
+    if(!r.ok)return r.json().catch(function(){return{};}).then(function(j){var e=new Error(j.message||("HTTP "+r.status));e.status=r.status;e.code=j.code==="28000"?"bad_code":(j.code==="28001"?"bad_key":(j.code==="42501"?"forbidden":"http"));e.retry=r.status>=500;throw e;});
+    return r.text().then(function(t){return t?JSON.parse(t):null;});},
+    function(){var e=new Error("sin red");e.retry=true;throw e;});}
 function makeSB(code){
   var subs={rounds:[],courses:[],config:[],extras:[]},last={},timer=null,busy=false,wseq=0,api={remote:true,onBad:null,status:null};
-  function rpc(fn,args){
-    return fetch(SB_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(args)}).then(function(r){
-      if(!r.ok)return r.json().catch(function(){return{};}).then(function(j){var e=new Error(j.message||("HTTP "+r.status));e.status=r.status;e.code=j.code==="28000"?"bad_code":"http";e.retry=r.status>=500;throw e;});
-      return r.text().then(function(t){return t?JSON.parse(t):null;});},
-      function(){var e=new Error("sin red");e.retry=true;throw e;});}
   function push(c,docs){var j=JSON.stringify(docs);if(last[c]===j)return;last[c]=j;subs[c].forEach(function(f){f(docs,{fromCache:false});});}
   function publish(st){var rounds={};
     (st.holes||[]).forEach(function(r){var id=r.day+"_"+r.player,d=rounds[id]||(rounds[id]={day:r.day,player:r.player,h:{}});d.h[r.hole]=r.strokes;});
@@ -247,10 +250,10 @@ function makeSB(code){
     .catch(function(e){if(e&&e.code==="bad_code"){clearInterval(timer);if(api.onBad)api.onBad();}else if(api.status)api.status(false);})
     .then(function(){busy=false;});}
   function write(c,id,d){wseq++;var p;
-    if(c==="rounds"){var parts=id.split("_");p=Object.keys(d.h||{}).reduce(function(q,h){return q.then(function(){var v=d.h[h];return rpc("copa_put_hole",{p_code:code,p_day:parts[0],p_player:parts[1],p_hole:+h,p_strokes:v===null?null:v});});},Promise.resolve());}
-    else if(c==="courses")p=rpc("copa_put_course",{p_code:code,p_cid:id,p_par:d.par,p_si:d.si});
-    else if(c==="extras"){var pp=id.split("_");p=rpc("copa_put_concurso",{p_code:code,p_day:pp[0],p_kind:pp[1],p_winner:d.winner||null,p_hole:d.hole||null});}
-    else p=rpc("copa_put_main",{p_code:code,p_inscripcion:d.inscripcion,p_overrides:d.hcOverrides||{}});
+    if(c==="rounds"){var parts=id.split("_");p=Object.keys(d.h||{}).reduce(function(q,h){return q.then(function(){var v=d.h[h];return rpc("copa_put_hole_t",{p_code:code,p_token:S.key,p_day:parts[0],p_player:parts[1],p_hole:+h,p_strokes:v===null?null:v});});},Promise.resolve());}
+    else if(c==="courses")p=rpc("copa_put_course_t",{p_code:code,p_token:S.key,p_cid:id,p_par:d.par,p_si:d.si});
+    else if(c==="extras"){var pp=id.split("_");p=rpc("copa_put_concurso_t",{p_code:code,p_token:S.key,p_day:pp[0],p_kind:pp[1],p_winner:d.winner||null,p_hole:d.hole||null});}
+    else p=rpc("copa_put_main_t",{p_code:code,p_token:S.key,p_inscripcion:d.inscripcion,p_overrides:d.hcOverrides||{}});
     return p.then(function(){wseq++;busy=false;return poll();},function(e){wseq++;throw e;});}
   document.addEventListener("visibilitychange",function(){if(!document.hidden)poll();});
   api.sub=function(c,cb){subs[c].push(cb);if(!timer){timer=setInterval(poll,POLL_MS);poll();}return function(){};};
@@ -292,7 +295,7 @@ function contestHole(day,kind){var x=(S.server.extras[day]||{})[kind];
 function setConcurso(day,kind,winner,hole){
   var ex=JSON.parse(JSON.stringify(S.server.extras));ex[day]=ex[day]||{};ex[day][kind]={winner:winner,hole:hole};S.server.extras=ex;render();
   writeDoc("extras",day+"_"+kind,{winner:winner,hole:hole},"Guardado");}
-document.addEventListener("change",function(e){var t=e.target;if(!t||!t.getAttribute)return;
+document.addEventListener("change",function(e){var t=e.target;if(!t||!t.getAttribute||!isAdmin())return;
   var cw=t.getAttribute("data-cw"),ch=t.getAttribute("data-ch"),key=cw||ch;if(!key)return;
   var q=key.split("|"),day=q[0],kind=q[1],cur=(S.server.extras[day]||{})[kind]||{};
   var winner=cw?(t.value||null):(cur.winner||null),hole=ch?(parseInt(t.value,10)||null):contestHole(day,kind);
@@ -362,6 +365,7 @@ function flush(day,pid){
     setSync("ok");render();
   }).catch(function(e){
     if(e&&e.code==="invalid_argument"){S.readOnly=true;setSync("ro");toast("No tenés permiso para guardar. Pedile a Angel acceso de colaborador.");}
+    else if(e&&(e.code==="forbidden"||e.code==="bad_key")){Object.keys(sent).forEach(function(h){if(S.pending[k]&&S.pending[k][h]===sent[h])delete S.pending[k][h];});savePending();setSync("err");toast(e.code==="forbidden"?"No tenés permiso para cargar esa tarjeta.":"Tu link personal no es válido. Pedile a Angel que te lo vuelva a mandar.");}
     else if(e&&e.retry===false){Object.keys(sent).forEach(function(h){if(S.pending[k]&&S.pending[k][h]===sent[h])delete S.pending[k][h];});savePending();setSync("err");toast("El servidor rechazó ese dato.");}
     else{setSync("err");toast("Sin señal. Tus golpes quedan guardados y se envían solos.");setTimeout(function(){schedule(day,pid);},5000);}
     render();
@@ -370,7 +374,7 @@ function flush(day,pid){
 function writeDoc(coll,id,data,okMsg,after){
   setSync("saving");
   S.store.set(coll,id,data).then(function(){setSync("ok");toast(okMsg);if(after)after();render();})
-  .catch(function(e){if(e&&e.code==="invalid_argument"){S.readOnly=true;setSync("ro");toast("No tenés permiso para guardar.");}else{setSync("err");toast("No se pudo guardar.");}render();});}
+  .catch(function(e){if(e&&e.code==="invalid_argument"){S.readOnly=true;setSync("ro");toast("No tenés permiso para guardar.");}else if(e&&(e.code==="forbidden"||e.code==="bad_key")){setSync("ok");toast("Solo el administrador puede hacer ese cambio.");}else{setSync("err");toast("No se pudo guardar.");}render();});}
 
 /* ---------- estado de sincronización ---------- */
 function setSync(s){if(s==="ok")s=S.remote?"live":"local";S.sync=s;var el=$("sync"),t={connecting:"Conectando…",live:"En vivo",ok:"En vivo",saving:"Guardando…",err:"Sin guardar",local:"Solo en este equipo",ro:"Solo lectura",stale:"Sin respuesta"}[s]||"";
@@ -379,16 +383,21 @@ function setSync(s){if(s==="ok")s=S.remote?"live":"local";S.sync=s;var el=$("syn
   el.lastChild.textContent=S.readOnly&&s!=="err"&&s!=="saving"?"Solo lectura":t;
   var b=$("banner");
   if(!S.remote&&S.sync!=="connecting"){b.hidden=false;b.textContent="Modo sin conexión: lo que cargues queda en este equipo. Para juntar las tarjetas de los tres, usá Sincronizar tarjetas.";}
-  else if(S.readOnly){b.hidden=false;b.textContent="Podés mirar el torneo pero no cargar golpes. Pedile a Angel que te comparta con permiso de colaborador.";}
+  else if(S.readOnly){b.hidden=false;b.textContent=S.key?"Tu link personal no es válido, así que solo podés mirar. Pedile a Angel que te lo vuelva a mandar.":"Estás en modo lectura: podés mirar el torneo pero no cargar golpes. Para cargar, abrí tu link personal (lo manda Angel).";}
   else b.hidden=true;}
 var tt;function toast(m){var t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(function(){t.hidden=true;},3200);}
 
 /* ---------- vistas ---------- */
+function idNote(){
+  if(!S.me)return(S.key&&!S.readOnly)?"":'<div class="note wn" style="margin:0 0 8px">Modo lectura: no podés cargar golpes. Abrí tu link personal para cargar.</div>';
+  var me=playerById(S.me.player).name;
+  if(S.me.admin)return'<div class="note" style="margin:0 0 8px">Sos <b>'+esc(me)+'</b> (administrador): podés cargar las tres tarjetas.</div>';
+  return'<div class="note" style="margin:0 0 8px">Sos <b>'+esc(me)+'</b>: cargás tu tarjeta y la de <b>'+esc(playerById(S.me.marks).name)+'</b>. Las otras las ves pero no las modificás.</div>';}
 function ptChip(pt){return pt===null||pt===undefined?"":'<span class="pt p'+Math.min(4,pt)+'">'+pt+"</span>";}
 function dayStatus(x){return x.complete?"Final":(x.started?"En juego":"Sin empezar");}
 
 function renderPos(){
-  var m=computeModel(),h="";
+  var m=computeModel(),h="",dis=isAdmin()?"":" disabled";
   h+='<div class="card spon"><div><div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.08em">Sponsor oficial</div><div style="font:700 24px/1.1 var(--f-d);text-transform:uppercase">Bar La Perrera</div></div>'+(LOGO?'<img class="logo" src="'+LOGO+'" alt="Bar La Perrera">':"")+"</div>";
   var genTag=m.allDone?'<span class="tag">Final</span>':'<span class="tag gold">Provisorio</span>';
   h+='<div class="card"><h2>General <small>suma de los 3 días</small></h2><div class="rows">';
@@ -411,10 +420,10 @@ function renderPos(){
       h+='<div class="note">Mauri para el '+x.adj.next.long.split(" ")[0].toLowerCase()+": <b>"+w+"</b> de handicap ("+r1(a.diff)+" pts contra el promedio de Angel y Fede, "+f1(a.avg)+").</div>";}
     h+="</div>";});
 
-  h+='<div class="card"><h2>Concursos <small>'+money(CONC)+' de cada uno</small></h2><div class="note" style="margin:-4px 0 6px">El que gana cobra '+money(CONC)+' de cada uno de los otros dos. Si nadie cumple la condición, elegí "Nadie".</div>';
+  h+='<div class="card"><h2>Concursos <small>'+money(CONC)+' de cada uno</small></h2><div class="note" style="margin:-4px 0 6px">El que gana cobra '+money(CONC)+' de cada uno de los otros dos. Si nadie cumple la condición, elegí "Nadie".'+(isAdmin()?"":" Solo Angel anota los ganadores.")+'</div>';
   DAYS.forEach(function(d){h+='<div class="conc"><b>'+d.long+" · "+d.name+"</b>";
     [["approach","Best approach"],["drive","Long drive"]].forEach(function(k){var ex=(S.server.extras[d.id]||{})[k[0]]||{},hole=contestHole(d.id,k[0]);
-      h+='<div class="crow"><span>'+k[1]+'</span><input type="number" inputmode="numeric" min="1" max="18" data-ch="'+d.id+"|"+k[0]+'" value="'+(hole||"")+'" placeholder="–" aria-label="Hoyo de '+k[1]+" "+d.label+'"><select data-cw="'+d.id+"|"+k[0]+'" aria-label="Ganador de '+k[1]+" "+d.label+'"><option value="">Pendiente</option>'+
+      h+='<div class="crow"><span>'+k[1]+'</span><input type="number" inputmode="numeric" min="1" max="18" data-ch="'+d.id+"|"+k[0]+'" value="'+(hole||"")+'" placeholder="–" aria-label="Hoyo de '+k[1]+" "+d.label+'"'+dis+'><select data-cw="'+d.id+"|"+k[0]+'" aria-label="Ganador de '+k[1]+" "+d.label+'"'+dis+'><option value="">Pendiente</option>'+
         PLAYERS.map(function(p){return'<option value="'+p.id+'"'+(ex.winner===p.id?" selected":"")+">"+esc(p.name)+"</option>";}).join("")+'<option value="none"'+(ex.winner==="none"?" selected":"")+">Nadie</option></select></div>";});
     h+="</div>";});
   h+="</div>";
@@ -451,16 +460,17 @@ function renderCard(){
   h+='<div class="seg">'+DAYS.map(function(dd){return'<button data-day="'+dd.id+'" aria-pressed="'+(dd.id===d.id)+'"><b>'+dd.label+" "+dd.date+"</b><span>"+dd.name+"</span></button>";}).join("")+"</div>";
   h+='<div class="meta">Azules · CR '+f1(d.cr)+" · Slope "+d.slope+" · Par "+d.par+"</div>";
   if(!course)h+='<div class="banner">Falta cargar par y SI de esta cancha. Podés ir anotando golpes igual; los puntos aparecen cuando la cargues en la pestaña Canchas.</div>';
+  h+=idNote();
   h+='<div class="card"><div class="chips" id="chips">';
   for(var i=1;i<=18;i++){var c=PLAYERS.filter(function(p){return x.res[p.id].holes[i-1]!==null;}).length;
     h+='<button data-hole="'+i+'" class="'+(c===3?"done":(c>0?"part":""))+'" '+(i===cur?'aria-current="true"':"")+' aria-label="Hoyo '+i+'">'+i+"</button>";}
   h+="</div>";
   h+='<div class="hole"><button class="nav" data-nav="-1" aria-label="Hoyo anterior"'+(cur===1?" disabled":"")+'>‹</button><div class="mid"><b>Hoyo '+cur+"</b><span>"+(course?"Par "+course.par[cur-1]+" · SI "+course.si[cur-1]:"Par y SI sin cargar")+'</span></div><button class="nav" data-nav="1" aria-label="Hoyo siguiente">'+(cur===18?"✓":"›")+"</button></div>";
-  PLAYERS.forEach(function(p){var r=x.res[p.id],g=r.holes[cur-1],pt=r.pts[cur-1];
+  PLAYERS.forEach(function(p){var r=x.res[p.id],g=r.holes[cur-1],pt=r.pts[cur-1],pro=!canEdit(p.id);
     var st=course?strokesOn(r.hc,course.si[cur-1]):null;
     h+='<div class="prow" data-p="'+p.id+'"><div class="who"><b>'+esc(p.name)+"</b><span>HC "+r.hc+(st!==null?" · recibe "+st:"")+"</span></div>"+
-       '<div class="step"><button class="sb" data-act="dec" aria-label="Un golpe menos"'+(ro?" disabled":"")+'>−</button><output class="val'+(g===null?" empty":"")+'">'+(g===null?"–":(g===0?"X":g))+'</output><button class="sb inc" data-act="inc" aria-label="Un golpe más"'+(ro?" disabled":"")+">+</button></div>"+
-       '<div class="right">'+ptChip(pt)+'<button class="xb" data-act="pick" aria-pressed="'+(g===0)+'" aria-label="Levantó la pelota"'+(ro?" disabled":"")+">levantó</button></div></div>";});
+       '<div class="step"><button class="sb" data-act="dec" aria-label="Un golpe menos"'+(pro?" disabled":"")+'>−</button><output class="val'+(g===null?" empty":"")+'">'+(g===null?"–":(g===0?"X":g))+'</output><button class="sb inc" data-act="inc" aria-label="Un golpe más"'+(pro?" disabled":"")+">+</button></div>"+
+       '<div class="right">'+ptChip(pt)+'<button class="xb" data-act="pick" aria-pressed="'+(g===0)+'" aria-label="Levantó la pelota"'+(pro?" disabled":"")+">levantó</button></div></div>";});
   h+='<div class="note">Primer toque en + o − marca el par. “Levantó” suma 0 puntos.</div></div>';
   h+='<div class="card"><h2>Tarjeta del día <small>tocá un hoyo para ir</small></h2><div class="scroll">'+cardTable(x)+"</div></div>";
   $("v-tarjeta").innerHTML=h;
@@ -495,40 +505,50 @@ function previewHtml(v){if(!v.ok)return"";var t='<table class="tbl" style="min-w
   for(var i=0;i<18;i++)t+="<td>"+(i+1)+"</td>";t+='</tr><tr><th class="lbl">Par</th>';for(i=0;i<18;i++)t+="<td>"+v.par[i]+"</td>";
   t+='</tr><tr><th class="lbl">SI</th>';for(i=0;i<18;i++)t+="<td>"+v.si[i]+"</td>";return t+"</tr></tbody></table>";}
 
-function renderCanchas(){
-  var h='<div class="note" style="margin:0">Cargá una sola vez, de la tarjeta de cada club (azules). Escribí los 18 números seguidos, separados por espacio o coma. Una vez guardado lo ven los tres.</div>';
+function renderCanchas(){var rd=isAdmin()?"":" readonly";
+  var h='<div class="note" style="margin:0">Cargá una sola vez, de la tarjeta de cada club (azules). Escribí los 18 números seguidos, separados por espacio o coma. Una vez guardado lo ven los tres.'+(isAdmin()?"":" Solo Angel puede modificar las canchas.")+'</div>';
   DAYS.forEach(function(d){var sv=S.server.courses[d.course],dr=S.draft[d.course];
     var parS=dr?dr.par:(sv&&sv.par?sv.par.join(" "):""),siS=dr?dr.si:(sv&&sv.si?sv.si.join(" "):"");
     var v=validateCourse(parS,siS),has=!!getCourse(d.course);
     h+='<details class="card" data-c="'+d.course+'"'+(has?"":" open")+"><summary><span>"+d.name+' <small class="muted" style="font:500 12px var(--f-b);text-transform:none">'+d.long+'</small></span><span class="tag'+(has?"":" gold")+'">'+(has?"Cargada":"Falta")+"</span></summary>"+
-      '<div class="fields"><label class="f">Par de los 18 hoyos<input type="text" inputmode="numeric" autocomplete="off" id="par-'+d.course+'" value="'+esc(parS)+'" placeholder="4 5 3 4 4 …"></label>'+
-      '<label class="f">SI (ventaja) de los 18 hoyos<input type="text" inputmode="numeric" autocomplete="off" id="si-'+d.course+'" value="'+esc(siS)+'" placeholder="7 1 15 9 3 …"></label>'+
+      '<div class="fields"><label class="f">Par de los 18 hoyos<input type="text" inputmode="numeric" autocomplete="off" id="par-'+d.course+'" value="'+esc(parS)+'" placeholder="4 5 3 4 4 …"'+rd+'></label>'+
+      '<label class="f">SI (ventaja) de los 18 hoyos<input type="text" inputmode="numeric" autocomplete="off" id="si-'+d.course+'" value="'+esc(siS)+'" placeholder="7 1 15 9 3 …"'+rd+'></label>'+
       '<div id="st-'+d.course+'">'+(parS||siS?courseStatusHtml(v,!dr&&has):"")+'</div><div class="scroll" id="pv-'+d.course+'">'+previewHtml(v)+'</div>'+
-      '<div class="btns"><button class="btn" id="sv-'+d.course+'"'+(v.ok&&!S.readOnly?"":" disabled")+">Guardar cancha</button></div></div></details>";});
+      '<div class="btns"><button class="btn" id="sv-'+d.course+'"'+(v.ok&&isAdmin()?"":" disabled")+">Guardar cancha</button></div></div></details>";});
   $("v-canchas").innerHTML=h;
   DAYS.forEach(function(d){var c=d.course;
     function onIn(){var v=validateCourse($("par-"+c).value,$("si-"+c).value);S.draft[c]={par:$("par-"+c).value,si:$("si-"+c).value};
-      $("st-"+c).innerHTML=courseStatusHtml(v,false);$("pv-"+c).innerHTML=previewHtml(v);$("sv-"+c).disabled=!(v.ok&&!S.readOnly);}
+      $("st-"+c).innerHTML=courseStatusHtml(v,false);$("pv-"+c).innerHTML=previewHtml(v);$("sv-"+c).disabled=!(v.ok&&isAdmin());}
     $("par-"+c).oninput=onIn;$("si-"+c).oninput=onIn;
     $("sv-"+c).onclick=function(){var v=validateCourse($("par-"+c).value,$("si-"+c).value);if(!v.ok)return;
       writeDoc("courses",c,{par:v.par,si:v.si,updatedAt:Date.now()},d.name+" guardada",function(){delete S.draft[c];});};});
 }
 
 function shareLink(){return location.origin+location.pathname+"?c="+encodeURIComponent(S.code||"");}
-function linkCard(){return'<div class="card"><h2>Link del torneo</h2><div class="note" style="margin:0 0 10px">Mandá este link al grupo. Quien lo abre entra directo, sin cuenta, y puede ver y cargar las tarjetas. Es privado: no lo publiques en otro lado.</div>'+
-  '<div class="btns"><button class="btn" data-link="copy">Copiar link</button><a class="btn sec" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("Copa Mesa de los Fieles: "+shareLink())+'">Enviar por WhatsApp</a></div></div>';}
+function plink(pid){return location.origin+location.pathname+"?c="+encodeURIComponent(S.code||"")+"&k="+encodeURIComponent((S.links&&S.links[pid])||"");}
+function linksCard(){
+  var h='<div class="card"><h2>Links</h2>';
+  if(isAdmin()){
+    h+='<div class="note" style="margin:0 0 6px">Cada jugador tiene su link personal: con ese link carga su tarjeta y la del jugador que marca, y ve todo lo demás. Mandáselo solo a él y que no lo reenvíe.</div>';
+    if(!S.links)h+='<div class="note">Cargando los links…</div>';
+    else PLAYERS.forEach(function(p){var l=plink(p.id),mk=playerById(MARKS[p.id]).name;
+      h+='<div style="margin:12px 0 0"><b>'+esc(p.name)+'</b> <span class="muted">· carga su tarjeta y la de '+esc(mk)+'</span><div class="btns" style="margin-top:6px"><button class="btn sec" data-plink="'+p.id+'">Copiar link</button><a class="btn sec" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent("Copa Mesa de los Fieles. Tu link personal para cargar la tarjeta (no lo reenvíes): "+l)+'">WhatsApp</a></div></div>';});
+    h+='<div class="note" style="margin-top:14px">Link de solo lectura, para mirar sin cargar:</div><div class="btns"><button class="btn sec" data-link="copy">Copiar link de lectura</button></div>';
+  }else h+='<div class="note" style="margin:0 0 10px">Tu link personal es el que abriste: guardalo y no lo reenvíes. Si otra persona quiere mirar sin cargar, puede usar el link de lectura.</div><div class="btns"><button class="btn sec" data-link="copy">Copiar link de lectura</button></div>';
+  return h+"</div>";}
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest('[data-link="copy"]');if(b)copyText(shareLink());});
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-plink]");if(b&&isAdmin())copyText(plink(b.getAttribute("data-plink")));});
 
 function renderAjustes(){
-  var m=computeModel(),cfg=S.server.config.main||{},dr=S.draftAj||{ins:typeof cfg.inscripcion==="number"?cfg.inscripcion:DEFAULT_INS,ov:cfg.hcOverrides||{}};
-  var h='<div class="card"><h2>Inscripción</h2><div class="fields"><label class="f">Inscripción por jugador (pesos)<input type="number" inputmode="numeric" id="ins" value="'+dr.ins+'"></label>'+
+  var dis=isAdmin()?"":" disabled",m=computeModel(),cfg=S.server.config.main||{},dr=S.draftAj||{ins:typeof cfg.inscripcion==="number"?cfg.inscripcion:DEFAULT_INS,ov:cfg.hcOverrides||{}};
+  var h='<div class="card"><h2>Inscripción</h2><div class="fields"><label class="f">Inscripción por jugador (pesos)<input type="number" inputmode="numeric" id="ins" value="'+dr.ins+'"'+dis+'></label>'+
     '<div class="note" style="margin:0">Pozo: '+money(dr.ins*PLAYERS.length)+' entre los tres. Se reparte 10% a cada ganador diario (30%), 50% al 1° general y 20% al 2°.</div></div></div>';
-  h+=linkCard();
+  h+=linksCard();
   h+='<div class="card"><h2>Handicap de juego <small>vacío = automático</small></h2><div class="ovg"><span></span>'+PLAYERS.map(function(p){return'<span class="h">'+esc(p.name)+"</span>";}).join("");
   m.days.forEach(function(x){h+='<span class="muted" style="font-size:13px">'+x.d.label+"</span>";
-    PLAYERS.forEach(function(p){var k=x.d.id+"_"+p.id,v=dr.ov[k];h+='<input type="number" inputmode="numeric" data-ov="'+k+'" value="'+(typeof v==="number"?v:"")+'" placeholder="'+x.res[p.id].auto+'" aria-label="HC '+esc(p.name)+" "+x.d.label+'">';});});
+    PLAYERS.forEach(function(p){var k=x.d.id+"_"+p.id,v=dr.ov[k];h+='<input type="number" inputmode="numeric" data-ov="'+k+'"'+dis+' value="'+(typeof v==="number"?v:"")+'" placeholder="'+x.res[p.id].auto+'" aria-label="HC '+esc(p.name)+" "+x.d.label+'">';});});
   h+='</div><div class="note">Automático: '+allowTxt()+' × (Índice × Slope ÷ 113 + CR − Par), redondeado al final. El de Mauri incluye el ajuste de los días anteriores. Usá el manual solo si el club da otro número.</div>'+
-    '<div class="btns" style="margin-top:12px"><button class="btn" id="save-aj"'+(S.readOnly?" disabled":"")+'>Guardar ajustes</button></div></div>';
+    '<div class="btns" style="margin-top:12px"><button class="btn" id="save-aj"'+(isAdmin()?"":" disabled")+'>Guardar ajustes</button></div></div>';
   h+='<div class="card"><h2>Reglas</h2><ul class="rules"><li>Stableford neto: doble bogey neto o peor 0, bogey 1, par 2, birdie 3, eagle 4. Si ya no suma, se levanta la pelota.</li>'+
     "<li>Inscripción de $100.000 por jugador. Índices: Angel 25,0 · Fede 27,9 · Mauri 45,2. Salidas azules los tres días. Handicap de juego: "+allowTxt()+" del handicap de cancha.</li>"+
     "<li>Recalibración de Mauri al cerrar cada día: se compara con el promedio de Angel y Fede. Con 6 o más puntos de diferencia ajusta 2 golpes, con 12 o más 4 (máximo por día). Si Mauri hace más, baja; si hace menos, sube. El ajuste se acumula y cada día se puntúa con el handicap de ese día.</li>"+
@@ -562,7 +582,7 @@ $("v-tarjeta").addEventListener("click",function(e){
   if((el=e.target.closest("[data-goto]"))){S.ui.hole=+el.dataset.goto;saveUi();render();window.scrollTo({top:0,behavior:"smooth"});return;}
   if((el=e.target.closest("[data-nav]"))){var n=S.ui.hole+ +el.dataset.nav;if(n>18){setTab("posiciones");return;}if(n<1)return;S.ui.hole=n;saveUi();render();return;}
   if((el=e.target.closest("[data-act]"))){
-    var row=el.closest(".prow");if(!row||S.readOnly)return;
+    var row=el.closest(".prow");if(!row||S.readOnly||!canEdit(row.dataset.p))return;
     var pid=row.dataset.p,day=S.ui.day,hole=S.ui.hole,g=gross(day,pid,hole),course=getCourse(dayById(day).course),par=course?course.par[hole-1]:4,a=el.dataset.act;
     if(a==="pick")setHole(day,pid,hole,g===0?null:0);
     else if(a==="inc")setHole(day,pid,hole,(g===null||g===0)?par:Math.min(15,g+1));
@@ -592,11 +612,21 @@ function gate(msg){
     try{localStorage.setItem("copa-code",v);}catch(e){}
     g.hidden=true;document.querySelector(".tabs").hidden=false;S.gate=false;boot(v);render();};
 }
-function boot(code){S.code=code;S.pending=loadPending();start(makeSB(code));
-  Object.keys(S.pending).forEach(function(k){if(S.pending[k]&&Object.keys(S.pending[k]).length){var p=k.split("_");schedule(p[0],p[1]);}});}
+function boot(code){S.code=code;S.pending=loadPending();S.me=null;S.links=null;start(makeSB(code));
+  if(!S.key){S.readOnly=true;setSync(S.sync);render();return;}
+  (function auth(){rpc("copa_whoami",{p_code:code,p_token:S.key}).then(function(me){
+      S.me=me;S.readOnly=false;setSync(S.sync);render();
+      Object.keys(S.pending).forEach(function(k){if(S.pending[k]&&Object.keys(S.pending[k]).length){var p=k.split("_");schedule(p[0],p[1]);}});
+      if(me.admin)rpc("copa_links",{p_code:code,p_token:S.key}).then(function(l){S.links=l;render();},function(){});
+    },function(e){
+      if(e&&e.code==="bad_key"){S.readOnly=true;setSync(S.sync);render();}
+      else if(!(e&&e.code==="bad_code"))setTimeout(auth,4000);
+    });})();}
 (function init(){
   var code=null;
-  try{var q=new URLSearchParams(location.search).get("c");if(q){code=q.trim();localStorage.setItem("copa-code",code);}else code=localStorage.getItem("copa-code");}catch(e){}
+  try{var qs=new URLSearchParams(location.search),q=qs.get("c"),k=qs.get("k");
+    if(q){code=q.trim();localStorage.setItem("copa-code",code);}else code=localStorage.getItem("copa-code");
+    if(k){S.key=k.trim();localStorage.setItem("copa-key",S.key);}else S.key=localStorage.getItem("copa-key");}catch(e){}
   setSync("connecting");
   if(code){render();boot(code);}else gate("");
 })();
