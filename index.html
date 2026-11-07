@@ -128,6 +128,15 @@ textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--l
 .tbl td.c{font-weight:600;cursor:pointer}
 .tbl td.tot{font-weight:700;padding-left:8px}
 .tbl tr.dim td,.tbl tr.dim th{color:var(--muted);font-size:12px}
+.tbl th.sub,.tbl td.sub{background:var(--surface2);font-weight:700;padding:4px 6px}
+.tbl td.lab{text-align:left;color:var(--muted);font-size:12px;padding-right:8px}
+.tbl.sum th.lbl{vertical-align:middle;border-right:1px solid var(--line)}
+.crow2{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:center;margin-bottom:6px}
+.trow{display:grid;grid-template-columns:1.3fr 1fr 1fr .8fr;gap:6px;margin:-2px 0 8px}
+.trow input{padding:8px 4px;text-align:center}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;margin:0 0 8px}
+.chk input{width:20px;height:20px}
+.who i{font-style:normal}
 
 label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 input[type=text],input[type=number],input[inputmode]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}
@@ -153,7 +162,7 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
   <header>
     <h1>Copa “Mesa de los Fieles”</h1>
     <div class="top">
-      <div class="sub">Stableford neto · azules · 7 al 9 de nov</div>
+      <div class="sub">Stableford neto · 7 al 9 de nov</div>
       <span class="pill" id="sync" role="status"><i></i><span>Conectando…</span></span>
     </div>
     <nav class="tabs" role="tablist" aria-label="Secciones">
@@ -191,8 +200,8 @@ var DEFAULT_HOLES={d1:{approach:5,drive:8}};
 var LOGO="data:image/jpeg;base64,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";
 
 var S={
-  server:{rounds:{},courses:{},config:{},extras:{}},
-  pending:{}, draft:{}, draftAj:null,
+  server:{rounds:{},courses:{},config:{},extras:{},selfs:{},tees:{}},
+  pending:{}, pendingS:{}, draft:{}, draftAj:null, draftTees:null, adminEdit:false,
   ui:{tab:"posiciones",day:defaultDay(),hole:1},
   sync:"connecting", remote:false, readOnly:false, store:null, fresh:false, me:null, key:null, links:null
 };
@@ -207,7 +216,9 @@ function dayById(id){return DAYS.filter(function(d){return d.id===id;})[0];}
 function playerById(id){return PLAYERS.filter(function(p){return p.id===id;})[0];}
 var MARKS={angel:"fede",fede:"mauri",mauri:"angel"};
 function isAdmin(){return !!(S.me&&S.me.admin);}
-function canEdit(pid){return !!(S.me&&(S.me.admin||S.me.player===pid||S.me.marks===pid));}
+/* tarjeta OFICIAL: la carga el marcador (o el administrador si activa la correccion). El autocontrol es aparte y cada uno carga el suyo. */
+function canMark(pid){return !!(S.me&&(S.me.marks===pid||(S.me.admin&&S.adminEdit)));}
+function markerOf(pid){for(var k in MARKS)if(MARKS[k]===pid)return k;return null;}
 
 /* ---------- preferencias por dispositivo ---------- */
 try{var u=JSON.parse(localStorage.getItem("copa-ui")||"{}");
@@ -239,11 +250,13 @@ function rpc(fn,args){
     return r.text().then(function(t){return t?JSON.parse(t):null;});},
     function(){var e=new Error("sin red");e.retry=true;throw e;});}
 function makeSB(code){
-  var subs={rounds:[],courses:[],config:[],extras:[]},last={},timer=null,busy=false,wseq=0,api={remote:true,onBad:null,status:null};
+  var subs={rounds:[],courses:[],config:[],extras:[],selfs:[],tees:[]},last={},timer=null,busy=false,wseq=0,api={remote:true,onBad:null,status:null};
   function push(c,docs){var j=JSON.stringify(docs);if(last[c]===j)return;last[c]=j;subs[c].forEach(function(f){f(docs,{fromCache:false});});}
   function publish(st){var rounds={};
     (st.holes||[]).forEach(function(r){var id=r.day+"_"+r.player,d=rounds[id]||(rounds[id]={day:r.day,player:r.player,h:{}});d.h[r.hole]=r.strokes;});
+    var selfs={};(st.selfs||[]).forEach(function(r){var id=r.day+"_"+r.player,d=selfs[id]||(selfs[id]={day:r.day,player:r.player,h:{}});d.h[r.hole]=r.strokes;});
     var cfg=st.config||{};
+    push("selfs",Object.entries(selfs));push("tees",cfg.tees?[["all",cfg.tees]]:[]);
     push("rounds",Object.entries(rounds));push("courses",Object.entries(cfg.courses||{}));push("config",cfg.main?[["main",cfg.main]]:[]);push("extras",Object.entries(cfg.extras||{}));}
   function poll(){if(busy||document.hidden)return Promise.resolve();busy=true;var s0=wseq;
     return rpc("copa_state",{p_code:code}).then(function(st){if(s0===wseq)publish(st);if(api.status)api.status(true);})
@@ -253,6 +266,8 @@ function makeSB(code){
     if(c==="rounds"){var parts=id.split("_");p=Object.keys(d.h||{}).reduce(function(q,h){return q.then(function(){var v=d.h[h];return rpc("copa_put_hole_t",{p_code:code,p_token:S.key,p_day:parts[0],p_player:parts[1],p_hole:+h,p_strokes:v===null?null:v});});},Promise.resolve());}
     else if(c==="courses")p=rpc("copa_put_course_t",{p_code:code,p_token:S.key,p_cid:id,p_par:d.par,p_si:d.si});
     else if(c==="extras"){var pp=id.split("_");p=rpc("copa_put_concurso_t",{p_code:code,p_token:S.key,p_day:pp[0],p_kind:pp[1],p_winner:d.winner||null,p_hole:d.hole||null});}
+    else if(c==="selfs"){var sp=id.split("_");p=Object.keys(d.h||{}).reduce(function(q,h){return q.then(function(){var v=d.h[h];return rpc("copa_put_self_t",{p_code:code,p_token:S.key,p_day:sp[0],p_hole:+h,p_strokes:v===null?null:v});});},Promise.resolve());}
+    else if(c==="tees")p=rpc("copa_put_tees_t",{p_code:code,p_token:S.key,p_tees:d.map||{}});
     else p=rpc("copa_put_main_t",{p_code:code,p_token:S.key,p_inscripcion:d.inscripcion,p_overrides:d.hcOverrides||{}});
     return p.then(function(){wseq++;busy=false;return poll();},function(e){wseq++;throw e;});}
   document.addEventListener("visibilitychange",function(){if(!document.hidden)poll();});
@@ -261,7 +276,12 @@ function makeSB(code){
   return api;}
 
 /* ---------- cálculo ---------- */
-function baseHc(p,d){return Math.round(ALLOW[p.id]*(p.hi*d.slope/113+d.cr-d.par));}
+var PRESETS={ce:[["Azules",74.0,129,72],["Blancas",71.0,121,72],["Amarillas",67.1,111,72]],pl:[["Azules",73.0,128,72]],vg:[["Azules",71.4,130,72],["Blancas",70.1,127,72],["Rojas",66.1,119,72]]};
+function teeFor(p,d){var t=(S.server.tees&&S.server.tees.all||{})[d.id+"_"+p.id];
+  if(t&&typeof t.cr==="number"&&typeof t.slope==="number"&&typeof t.par==="number")return{n:t.n||"Otra",cr:t.cr,slope:t.slope,par:t.par};
+  return{n:"Azules",cr:d.cr,slope:d.slope,par:d.par};}
+function baseHc(p,d){var t=teeFor(p,d);return Math.round(ALLOW[p.id]*(p.hi*t.slope/113+t.cr-t.par));}
+function cr1(n){return(Math.round(n*10)/10).toFixed(1).replace(".",",");}
 function pct(x){return Math.round(x*100)+"%";}
 function allowTxt(){return ALLOW.angel===ALLOW.fede&&ALLOW.fede===ALLOW.mauri?pct(ALLOW.angel):pct(ALLOW.angel)+" (Mauri "+pct(ALLOW.mauri)+")";}
 function strokesOn(hc,si){if(hc<=0)return 0;return Math.floor(hc/18)+(si<=hc%18?1:0);}
@@ -270,6 +290,10 @@ function getCourse(cid){var c=S.server.courses[cid];
 function gross(day,pid,hole){var k=day+"_"+pid,p=S.pending[k];
   if(p&&(hole in p))return p[hole];
   var d=S.server.rounds[k];var v=d&&d.h?d.h[hole]:null;return v===undefined?null:v;}
+function selfv(day,pid,hole){var k=day+"_"+pid,p=S.pendingS[k];
+  if(p&&(hole in p))return p[hole];
+  var d=S.server.selfs[k];var v=d&&d.h?d.h[hole]:null;return v===undefined?null:v;}
+function diffs(day,pid){var out=[];for(var h=1;h<=18;h++){var o=gross(day,pid,h),v=selfv(day,pid,h);if(o!==null&&v!==null&&o!==v)out.push({h:h,o:o,s:v});}return out;}
 function ptsFor(g,course,hole,hc){
   if(g===null||g===undefined)return null;
   if(g===0)return 0;
@@ -311,11 +335,16 @@ function computeModel(){
     var course=getCourse(d.course),res={};
     PLAYERS.forEach(function(p){
       var base=baseHc(p,d),auto=base+(p.id==="mauri"?carry:0),o=ov[d.id+"_"+p.id];
-      var hc=typeof o==="number"?o:auto,holes=[],pts=[],n=0,tot=0,gr=0;
-      for(var h=1;h<=18;h++){var g=gross(d.id,p.id,h);holes.push(g);var pt=null;
-        if(g!==null){n++;if(g>0)gr+=g;pt=ptsFor(g,course,h,hc);if(pt!==null)tot+=pt;}
-        pts.push(pt);}
-      res[p.id]={p:p,hc:hc,auto:auto,base:base,over:typeof o==="number",holes:holes,pts:pts,n:n,tot:tot,gr:gr};
+      var hc=typeof o==="number"?o:auto,holes=[],pts=[],ga=[],stv=[],n=0,tot=0,pk=0;
+      for(var h=1;h<=18;h++){var g=gross(d.id,p.id,h);holes.push(g);var pt=null,st=course?strokesOn(hc,course.si[h-1]):0,a=null;
+        if(g!==null){n++;pt=ptsFor(g,course,h,hc);if(pt!==null)tot+=pt;
+          if(g>0)a=g;else{pk++;if(course)a=course.par[h-1]+2+st;}}
+        pts.push(pt);ga.push(a);stv.push(st);}
+      var seg=function(a0,b0){var br=0,sx=0,c=0,pp=0,any=false;
+        for(var i=a0;i<b0;i++){if(ga[i]!==null){br+=ga[i];sx+=stv[i];c++;}if(holes[i]!==null){any=true;pp+=pts[i]||0;}}
+        return{n:c,br:c?br:null,net:(c&&course)?br-sx:null,pts:(any&&course)?pp:null};};
+      var sg={out:seg(0,9),inn:seg(9,18),tot:seg(0,18)};
+      res[p.id]={p:p,hc:hc,auto:auto,base:base,over:typeof o==="number",tee:teeFor(p,d),holes:holes,pts:pts,n:n,tot:tot,seg:sg,pk:pk,gr:sg.tot.br||0};
     });
     var complete=PLAYERS.every(function(p){return res[p.id].n===18;});
     var started=PLAYERS.some(function(p){return res[p.id].n>0;});
@@ -341,35 +370,34 @@ function computeModel(){
 
 /* ---------- escritura ---------- */
 var wq={};
-function savePending(){try{localStorage.setItem("copa-pending",JSON.stringify(S.pending));}catch(e){}}
+function PEND(kind){return kind==="selfs"?S.pendingS:S.pending;}
+function savePending(){try{localStorage.setItem("copa-pending",JSON.stringify(S.pending));localStorage.setItem("copa-pending-self",JSON.stringify(S.pendingS));}catch(e){}}
 function loadPending(){try{return JSON.parse(localStorage.getItem("copa-pending")||"{}")||{};}catch(e){return{};}}
-function setHole(day,pid,hole,val){
-  var k=day+"_"+pid;S.pending[k]=S.pending[k]||{};S.pending[k][hole]=val;savePending();
-  render();schedule(day,pid);}
-function schedule(day,pid){var k=day+"_"+pid,q=wq[k]=wq[k]||{t:null,busy:false,again:false};
-  clearTimeout(q.t);q.t=setTimeout(function(){flush(day,pid);},400);}
-function flush(day,pid){
-  var k=day+"_"+pid,q=wq[k];if(q.busy){q.again=true;return;}
-  var edits=S.pending[k];if(!edits||!Object.keys(edits).length)return;
+function loadPendingS(){try{return JSON.parse(localStorage.getItem("copa-pending-self")||"{}")||{};}catch(e){return{};}}
+function setHole(day,pid,hole,val,kind){kind=kind||"rounds";
+  var P=PEND(kind),k=day+"_"+pid;P[k]=P[k]||{};P[k][hole]=val;savePending();
+  render();schedule(day,pid,kind);}
+function schedule(day,pid,kind){kind=kind||"rounds";var k=kind+"|"+day+"_"+pid,q=wq[k]=wq[k]||{t:null,busy:false,again:false};
+  clearTimeout(q.t);q.t=setTimeout(function(){flush(day,pid,kind);},400);}
+function flush(day,pid,kind){
+  kind=kind||"rounds";var P=PEND(kind),k=day+"_"+pid,q=wq[kind+"|"+k];if(!q)return;
+  if(q.busy){q.again=true;return;}
+  var edits=P[k];if(!edits||!Object.keys(edits).length)return;
   var sent={};Object.keys(edits).forEach(function(h){sent[h]=edits[h];});
   q.busy=true;setSync("saving");
-  var srv=S.server.rounds[k],now=Date.now(),ts={};
+  var srv=S.server[kind][k],now=Date.now(),ts={};
   Object.keys(sent).forEach(function(h){ts[h]=now;});
-  var job=srv?S.store.update("rounds",k,{h:sent,t:ts,updatedAt:now}):S.store.set("rounds",k,{day:day,player:pid,h:sent,t:ts,updatedAt:now});
-  job.catch(function(e){
-    if(srv&&e&&e.code==="invalid_argument")return S.store.set("rounds",k,{day:day,player:pid,h:merge(srv.h||{},sent),t:merge(srv.t||{},ts),updatedAt:now});
-    throw e;
-  }).then(function(){
-    Object.keys(sent).forEach(function(h){if(S.pending[k]&&S.pending[k][h]===sent[h])delete S.pending[k][h];});savePending();
-    var cur=S.server.rounds[k]||{};S.server.rounds[k]=merge(cur,{day:day,player:pid,h:sent,t:ts});
+  function drop(){Object.keys(sent).forEach(function(h){if(P[k]&&P[k][h]===sent[h])delete P[k][h];});savePending();}
+  var job=srv?S.store.update(kind,k,{h:sent,t:ts,updatedAt:now}):S.store.set(kind,k,{day:day,player:pid,h:sent,t:ts,updatedAt:now});
+  job.then(function(){
+    drop();var cur=S.server[kind][k]||{};S.server[kind][k]=merge(cur,{day:day,player:pid,h:sent,t:ts});
     setSync("ok");render();
   }).catch(function(e){
-    if(e&&e.code==="invalid_argument"){S.readOnly=true;setSync("ro");toast("No tenés permiso para guardar. Pedile a Angel acceso de colaborador.");}
-    else if(e&&(e.code==="forbidden"||e.code==="bad_key")){Object.keys(sent).forEach(function(h){if(S.pending[k]&&S.pending[k][h]===sent[h])delete S.pending[k][h];});savePending();setSync("err");toast(e.code==="forbidden"?"No tenés permiso para cargar esa tarjeta.":"Tu link personal no es válido. Pedile a Angel que te lo vuelva a mandar.");}
-    else if(e&&e.retry===false){Object.keys(sent).forEach(function(h){if(S.pending[k]&&S.pending[k][h]===sent[h])delete S.pending[k][h];});savePending();setSync("err");toast("El servidor rechazó ese dato.");}
-    else{setSync("err");toast("Sin señal. Tus golpes quedan guardados y se envían solos.");setTimeout(function(){schedule(day,pid);},5000);}
+    if(e&&(e.code==="forbidden"||e.code==="bad_key")){drop();setSync("err");toast(e.code==="forbidden"?"Esa tarjeta oficial la carga su marcador. No se guardó el cambio.":"Tu link personal no es válido. Pedile a Angel que te lo vuelva a mandar.");}
+    else if(e&&e.retry===false){drop();setSync("err");toast("El servidor rechazó ese dato.");}
+    else{setSync("err");toast("Sin señal. Tus golpes quedan guardados y se envían solos.");setTimeout(function(){schedule(day,pid,kind);},5000);}
     render();
-  }).then(function(){q.busy=false;if(q.again){q.again=false;flush(day,pid);}});
+  }).then(function(){q.busy=false;if(q.again){q.again=false;flush(day,pid,kind);}});
 }
 function writeDoc(coll,id,data,okMsg,after){
   setSync("saving");
@@ -390,9 +418,24 @@ var tt;function toast(m){var t=$("toast");t.textContent=m;t.hidden=false;clearTi
 /* ---------- vistas ---------- */
 function idNote(){
   if(!S.me)return(S.key&&!S.readOnly)?"":'<div class="note wn" style="margin:0 0 8px">Modo lectura: no podés cargar golpes. Abrí tu link personal para cargar.</div>';
-  var me=playerById(S.me.player).name;
-  if(S.me.admin)return'<div class="note" style="margin:0 0 8px">Sos <b>'+esc(me)+'</b> (administrador): podés cargar las tres tarjetas.</div>';
-  return'<div class="note" style="margin:0 0 8px">Sos <b>'+esc(me)+'</b>: cargás tu tarjeta y la de <b>'+esc(playerById(S.me.marks).name)+'</b>. Las otras las ves pero no las modificás.</div>';}
+  var me=playerById(S.me.player).name,mk=playerById(S.me.marks).name,mo=markerOf(S.me.player);mo=mo?playerById(mo).name:"";
+  return'<div class="note" style="margin:0 0 8px">Sos <b>'+esc(me)+'</b>'+(S.me.admin?" (administrador)":"")+'. Llevás la tarjeta <b>oficial</b> de <b>'+esc(mk)+'</b>; la tuya la lleva <b>'+esc(mo)+'</b>. Vos anotás tu <b>autocontrol</b> aparte: sirve para chequear, no cuenta para las posiciones.</div>';}
+function showG(g){return g===null||g===undefined?"–":(g===0?"X":g);}
+function teeSummary(x){var g={},ord=[];
+  PLAYERS.forEach(function(p){var t=x.res[p.id].tee,k=t.n+"|"+t.cr+"|"+t.slope+"|"+t.par;if(!g[k]){g[k]={t:t,n:[]};ord.push(k);}g[k].n.push(p.name);});
+  return ord.map(function(k){var q=g[k];return esc(q.t.n)+" "+cr1(q.t.cr)+"/"+q.t.slope+(q.t.par!==72?" par "+q.t.par:"")+" ("+q.n.map(esc).join(", ")+")";}).join(" · ");}
+function mismatchNote(x){var parts=[];
+  PLAYERS.forEach(function(p){var ds=diffs(x.d.id,p.id);if(ds.length)parts.push(p.name+" (hoyo"+(ds.length>1?"s ":" ")+ds.map(function(q){return q.h;}).join(", ")+")");});
+  return parts.length?'<div class="note wn">⚠ El autocontrol no coincide con la tarjeta oficial: '+esc(parts.join(" · "))+'. Revisenlo en la pestaña Tarjeta.</div>':"";}
+function dayTable(x){var course=x.course;
+  function v(a){return a===null||a===undefined?"–":a;}
+  var t='<div class="scroll"><table class="tbl sum" style="min-width:0"><thead><tr><th class="lbl"></th><th></th><th>Ida</th><th>Vuelta</th><th>Total</th></tr></thead><tbody>';
+  x.order.forEach(function(o){var r=x.res[o.id],s=r.seg,pk=r.pk?"*":"";
+    t+='<tr><th class="lbl" rowspan="3">'+esc(r.p.name)+'</th><td class="lab">Bruto</td><td>'+v(s.out.br)+"</td><td>"+v(s.inn.br)+'</td><td class="tot">'+v(s.tot.br)+pk+"</td></tr>";
+    t+='<tr><td class="lab">Neto</td><td>'+v(s.out.net)+"</td><td>"+v(s.inn.net)+'</td><td class="tot">'+v(s.tot.net)+"</td></tr>";
+    t+='<tr><td class="lab">Puntos</td><td>'+v(s.out.pts)+"</td><td>"+v(s.inn.pts)+'</td><td class="tot">'+(course?r.tot:"–")+"</td></tr>";});
+  var anyPk=PLAYERS.some(function(p){return x.res[p.id].pk;}),part=PLAYERS.some(function(p){return x.res[p.id].n>0&&x.res[p.id].n<18;});
+  return t+'</tbody></table></div>'+(anyPk||part?'<div class="note">'+(part?"Parcial: suma de los hoyos jugados hasta ahora. ":"")+(anyPk?"* Si levantó la pelota, en bruto y neto cuenta doble bogey neto. ":"")+"</div>":"");}
 function ptChip(pt){return pt===null||pt===undefined?"":'<span class="pt p'+Math.min(4,pt)+'">'+pt+"</span>";}
 function dayStatus(x){return x.complete?"Final":(x.started?"En juego":"Sin empezar");}
 
@@ -408,14 +451,16 @@ function renderPos(){
 
   m.days.forEach(function(x){
     var d=x.d,tag=x.complete?'<span class="tag">Final</span>':(x.started?'<span class="tag gold">En juego</span>':'<span class="tag">Sin empezar</span>');
-    h+='<div class="card"><h2>'+d.long+" "+tag+"</h2><div class='meta' style='margin:-4px 0 6px'>"+d.name+" · CR "+f1(d.cr)+" · Slope "+d.slope+"</div>";
+    h+='<div class="card"><h2>'+d.long+" "+tag+"</h2><div class='meta' style='margin:-4px 0 6px'>"+d.name+" · "+teeSummary(x)+"</div>";
     if(!x.course)h+='<div class="note wn" style="margin:0 0 6px">Falta cargar par y SI de la cancha (pestaña Canchas) para calcular los puntos.</div>';
     h+='<div class="rows">';
     x.order.forEach(function(o){var r=x.res[o.id];
       var lead=x.started&&o.pos===1&&x.course;
-      h+='<div class="row'+(lead?" lead":"")+'"><div class="pos">'+(x.started&&x.course?o.pos:"–")+'</div><div class="who"><b>'+esc(r.p.name)+"</b><span>HC "+r.hc+(r.over?" (manual)":"")+" · "+r.n+"/18 hoyos"+(lead&&o.prize?' · <span class="win">'+(o.tied?"empate, ":"")+(x.complete?"gana ":"va ganando ")+money(o.prize)+"</span>":"")+"</span></div>"+
+      h+='<div class="row'+(lead?" lead":"")+'"><div class="pos">'+(x.started&&x.course?o.pos:"–")+'</div><div class="who"><b>'+esc(r.p.name)+"</b><span>HC "+r.hc+(r.over?" (manual)":"")+" · "+esc(r.tee.n)+" · "+r.n+"/18 hoyos"+(lead&&o.prize?' · <span class="win">'+(o.tied?"empate, ":"")+(x.complete?"gana ":"va ganando ")+money(o.prize)+"</span>":"")+"</span></div>"+
          '<div class="big num">'+(x.course?r.tot:"–")+"</div></div>";});
     h+="</div>";
+    if(x.started&&x.course)h+=dayTable(x);
+    h+=mismatchNote(x);
     if(x.adj){var a=x.adj,w=a.change===0?"sin cambios":(a.change>0?"+"+a.change:"−"+Math.abs(a.change))+" golpes";
       h+='<div class="note">Mauri para el '+x.adj.next.long.split(" ")[0].toLowerCase()+": <b>"+w+"</b> de handicap ("+r1(a.diff)+" pts contra el promedio de Angel y Fede, "+f1(a.avg)+").</div>";}
     h+="</div>";});
@@ -447,7 +492,7 @@ function winners(order,pos){var a=order.filter(function(o){return o.pos===pos;})
   return a.map(function(o){return esc(playerById(o.id).name);}).join(" y ")+(a.length>1?" (se reparte)":"");}
 function shareText(m){
   var t="Copa Mesa de los Fieles"+(m.allDone?" (final)":" (provisorio)")+"\nGeneral: "+m.gen.map(function(g){return g.pos+". "+playerById(g.id).name+" "+g.tot;}).join(" · ");
-  m.days.forEach(function(x){if(x.started&&x.course)t+="\n"+x.d.label+": "+x.order.map(function(o){return playerById(o.id).name+" "+o.tot;}).join(" · ");});
+  m.days.forEach(function(x){if(x.started&&x.course)t+="\n"+x.d.label+": "+x.order.map(function(o){var sg=x.res[o.id].seg.tot;return playerById(o.id).name+" "+o.tot+" pts"+(sg.br!==null?" (Br "+sg.br+(sg.net!==null?" · Neto "+sg.net:"")+")":"");}).join(" · ");});
   var cs=[];DAYS.forEach(function(d){var ex=S.server.extras[d.id]||{};["approach","drive"].forEach(function(k){var w=ex[k]&&ex[k].winner;if(w&&playerById(w))cs.push(d.label+" "+(k==="approach"?"approach":"long drive")+" "+playerById(w).name);});});
   if(cs.length)t+="\nConcursos: "+cs.join(" · ");
   return t+"\nSponsor: Bar La Perrera";}
@@ -456,35 +501,63 @@ function copyText(t){
   try{navigator.clipboard.writeText(t).then(function(){toast("Copiado");},fb);}catch(e){fb();}}
 
 function renderCard(){
-  var m=computeModel(),di=DAYS.indexOf(dayById(S.ui.day)),x=m.days[di],d=x.d,cur=S.ui.hole,course=x.course,ro=S.readOnly,h="";
+  var m=computeModel(),di=DAYS.indexOf(dayById(S.ui.day)),x=m.days[di],d=x.d,cur=S.ui.hole,course=x.course,h="";
   h+='<div class="seg">'+DAYS.map(function(dd){return'<button data-day="'+dd.id+'" aria-pressed="'+(dd.id===d.id)+'"><b>'+dd.label+" "+dd.date+"</b><span>"+dd.name+"</span></button>";}).join("")+"</div>";
-  h+='<div class="meta">Azules · CR '+f1(d.cr)+" · Slope "+d.slope+" · Par "+d.par+"</div>";
+  h+='<div class="meta">'+d.name+" · Par "+d.par+" · "+teeSummary(x)+"</div>";
   if(!course)h+='<div class="banner">Falta cargar par y SI de esta cancha. Podés ir anotando golpes igual; los puntos aparecen cuando la cargues en la pestaña Canchas.</div>';
   h+=idNote();
+  if(isAdmin())h+='<label class="chk"><input type="checkbox" data-adminedit'+(S.adminEdit?" checked":"")+'> Corregir como administrador (habilita las tres tarjetas oficiales)</label>';
   h+='<div class="card"><div class="chips" id="chips">';
   for(var i=1;i<=18;i++){var c=PLAYERS.filter(function(p){return x.res[p.id].holes[i-1]!==null;}).length;
     h+='<button data-hole="'+i+'" class="'+(c===3?"done":(c>0?"part":""))+'" '+(i===cur?'aria-current="true"':"")+' aria-label="Hoyo '+i+'">'+i+"</button>";}
   h+="</div>";
   h+='<div class="hole"><button class="nav" data-nav="-1" aria-label="Hoyo anterior"'+(cur===1?" disabled":"")+'>‹</button><div class="mid"><b>Hoyo '+cur+"</b><span>"+(course?"Par "+course.par[cur-1]+" · SI "+course.si[cur-1]:"Par y SI sin cargar")+'</span></div><button class="nav" data-nav="1" aria-label="Hoyo siguiente">'+(cur===18?"✓":"›")+"</button></div>";
-  PLAYERS.forEach(function(p){var r=x.res[p.id],g=r.holes[cur-1],pt=r.pts[cur-1],pro=!canEdit(p.id);
+  h+='<div class="note" style="margin:0 0 4px"><b>Tarjeta oficial</b> · la carga el marcador y es la que cuenta para todos.</div>';
+  PLAYERS.forEach(function(p){var r=x.res[p.id],g=r.holes[cur-1],pt=r.pts[cur-1],pro=!canMark(p.id),mk=markerOf(p.id);
     var st=course?strokesOn(r.hc,course.si[cur-1]):null;
-    h+='<div class="prow" data-p="'+p.id+'"><div class="who"><b>'+esc(p.name)+"</b><span>HC "+r.hc+(st!==null?" · recibe "+st:"")+"</span></div>"+
-       '<div class="step"><button class="sb" data-act="dec" aria-label="Un golpe menos"'+(pro?" disabled":"")+'>−</button><output class="val'+(g===null?" empty":"")+'">'+(g===null?"–":(g===0?"X":g))+'</output><button class="sb inc" data-act="inc" aria-label="Un golpe más"'+(pro?" disabled":"")+">+</button></div>"+
+    var who=canMark(p.id)?(S.me&&S.me.marks===p.id?"la cargás vos":"corrección de administrador"):(mk?"la carga "+playerById(mk).name:"");
+    h+='<div class="prow" data-p="'+p.id+'"><div class="who"><b>'+esc(p.name)+"</b><span>HC "+r.hc+" · "+esc(r.tee.n)+(st!==null?" · recibe "+st:"")+"</span><span>"+esc(who)+"</span></div>"+
+       '<div class="step"><button class="sb" data-act="dec" aria-label="Un golpe menos"'+(pro?" disabled":"")+'>−</button><output class="val'+(g===null?" empty":"")+'">'+showG(g)+'</output><button class="sb inc" data-act="inc" aria-label="Un golpe más"'+(pro?" disabled":"")+">+</button></div>"+
        '<div class="right">'+ptChip(pt)+'<button class="xb" data-act="pick" aria-pressed="'+(g===0)+'" aria-label="Levantó la pelota"'+(pro?" disabled":"")+">levantó</button></div></div>";});
   h+='<div class="note">Primer toque en + o − marca el par. “Levantó” suma 0 puntos.</div></div>';
-  h+='<div class="card"><h2>Tarjeta del día <small>tocá un hoyo para ir</small></h2><div class="scroll">'+cardTable(x)+"</div></div>";
+  if(S.me){var me=S.me.player,sv=selfv(d.id,me,cur),ov=x.res[me].holes[cur-1],stt;
+    if(ov===null)stt='<i class="muted">Oficial: sin cargar</i>';
+    else if(sv===null)stt='<i class="muted">Oficial: '+showG(ov)+"</i>";
+    else if(sv===ov)stt='<i class="ok">Oficial: '+showG(ov)+" ✓ coincide</i>";
+    else stt='<i class="er">Oficial: '+showG(ov)+" ⚠ no coincide</i>";
+    h+='<div class="card"><h2>Mi autocontrol <small>hoyo '+cur+'</small></h2><div class="prow" data-p="'+me+'" data-s="1"><div class="who"><b>Mi golpe</b><span>'+stt+"</span></div>"+
+       '<div class="step"><button class="sb" data-act="dec" aria-label="Un golpe menos">−</button><output class="val'+(sv===null?" empty":"")+'">'+showG(sv)+'</output><button class="sb inc" data-act="inc" aria-label="Un golpe más">+</button></div>'+
+       '<div class="right"><button class="xb" data-act="pick" aria-pressed="'+(sv===0)+'" aria-label="Levantó la pelota">levantó</button></div></div>'+
+       '<div class="note">Anotá lo que contás vos. No suma puntos: es para chequear contra lo que carga tu marcador. Si no coincide, aparece la alerta y lo revisan entre los dos.</div></div>';}
+  h+='<div class="card"><h2>Tarjeta oficial del día <small>tocá un hoyo para ir</small></h2><div class="scroll">'+cardTable(x)+"</div></div>";
+  if(x.started&&course)h+='<div class="card"><h2>Resumen <small>bruto, neto y puntos</small></h2>'+dayTable(x)+"</div>";
+  h+=autoCard(x);
   $("v-tarjeta").innerHTML=h;
   var ch=$("chips"),a=ch.querySelector('[aria-current="true"]');if(a)ch.scrollLeft=a.offsetLeft-ch.clientWidth/2+a.offsetWidth/2;
 }
+function autoCard(x){var d=x.d,rows="",any=false;
+  PLAYERS.forEach(function(p){var n=0;for(var k=1;k<=18;k++)if(selfv(d.id,p.id,k)!==null)n++;
+    if(!n){rows+='<div class="note" style="margin:8px 0 0"><b>'+esc(p.name)+":</b> sin autocontrol cargado.</div>";return;}
+    any=true;var ds=diffs(d.id,p.id);
+    rows+='<div style="margin:10px 0 0"><b>'+esc(p.name)+'</b> <span class="muted">· '+n+(n>1?" hoyos anotados":" hoyo anotado")+"</span> "+(ds.length?'<span class="wn">⚠ '+ds.length+(ds.length>1?" diferencias":" diferencia")+"</span>":'<span class="ok">✓ coincide con la oficial</span>')+
+      ds.map(function(q){return'<div class="wn" style="margin-left:12px">Hoyo '+q.h+": oficial "+showG(q.o)+" · autocontrol "+showG(q.s)+"</div>";}).join("")+"</div>";});
+  if(!any)return"";
+  return'<div class="card"><h2>Autocontrol <small>contra la oficial</small></h2>'+rows+'<div class="note">Si hay diferencias, el marcador revisa y corrige la tarjeta oficial. El autocontrol nunca modifica las posiciones.</div></div>';}
 function cardTable(x){var course=x.course,cur=S.ui.hole,i;
-  var t='<table class="tbl"><thead><tr><th class="lbl">Hoyo</th>';
-  for(i=1;i<=18;i++)t+='<th class="'+(i===cur?"cur":"")+'"><button data-goto="'+i+'">'+i+"</button></th>";
-  t+="<th>Br</th><th>Pts</th></tr></thead><tbody>";
-  t+='<tr class="dim"><th class="lbl">Par</th>';for(i=0;i<18;i++)t+="<td>"+(course?course.par[i]:"·")+"</td>";t+="<td></td><td></td></tr>";
-  t+='<tr class="dim"><th class="lbl">SI</th>';for(i=0;i<18;i++)t+="<td>"+(course?course.si[i]:"·")+"</td>";t+="<td></td><td></td></tr>";
-  PLAYERS.forEach(function(p){var r=x.res[p.id];t+='<tr><th class="lbl">'+esc(p.name)+"</th>";
-    for(i=0;i<18;i++){var g=r.holes[i],pt=r.pts[i];t+='<td class="c'+(pt!==null?" p"+Math.min(4,pt):"")+'" data-goto="'+(i+1)+'">'+(g===null?"":(g===0?"X":g))+"</td>";}
-    t+='<td class="tot">'+(r.gr||"")+'</td><td class="tot">'+(course?r.tot:"")+"</td></tr>";});
+  function th(n){return'<th class="'+(n===cur?"cur":"")+'"><button data-goto="'+n+'">'+n+"</button></th>";}
+  function cell(r,n){var g=r.holes[n-1],pt=r.pts[n-1];return'<td class="c'+(pt!==null?" p"+Math.min(4,pt):"")+'" data-goto="'+n+'">'+(g===null?"":(g===0?"X":g))+"</td>";}
+  function v(a){return a===null||a===undefined?"":a;}
+  function psum(a,b){var s=0;for(var k=a;k<b;k++)s+=course.par[k];return s;}
+  var t='<table class="tbl" style="min-width:900px"><thead><tr><th class="lbl">Hoyo</th>';
+  for(i=1;i<=9;i++)t+=th(i);t+='<th class="sub">Ida</th>';for(i=10;i<=18;i++)t+=th(i);t+='<th class="sub">Vta</th><th class="sub">Br</th><th class="sub">Neto</th><th class="sub">Pts</th></tr></thead><tbody>';
+  t+='<tr class="dim"><th class="lbl">Par</th>';for(i=0;i<9;i++)t+="<td>"+(course?course.par[i]:"·")+"</td>";t+='<td class="sub">'+(course?psum(0,9):"")+"</td>";
+  for(i=9;i<18;i++)t+="<td>"+(course?course.par[i]:"·")+"</td>";t+='<td class="sub">'+(course?psum(9,18):"")+'</td><td class="sub">'+(course?psum(0,18):"")+'</td><td class="sub"></td><td class="sub"></td></tr>';
+  t+='<tr class="dim"><th class="lbl">SI</th>';for(i=0;i<9;i++)t+="<td>"+(course?course.si[i]:"·")+"</td>";t+='<td class="sub"></td>';
+  for(i=9;i<18;i++)t+="<td>"+(course?course.si[i]:"·")+"</td>";t+='<td class="sub"></td><td class="sub"></td><td class="sub"></td><td class="sub"></td></tr>';
+  PLAYERS.forEach(function(p){var r=x.res[p.id],s=r.seg;t+='<tr><th class="lbl">'+esc(p.name)+"</th>";
+    for(i=1;i<=9;i++)t+=cell(r,i);t+='<td class="sub">'+v(s.out.br)+"</td>";
+    for(i=10;i<=18;i++)t+=cell(r,i);
+    t+='<td class="sub">'+v(s.inn.br)+'</td><td class="sub">'+v(s.tot.br)+(r.pk?"*":"")+'</td><td class="sub">'+v(s.tot.net)+'</td><td class="sub">'+(course?r.tot:"")+"</td></tr>";});
   return t+"</tbody></table>";}
 
 function parseNums(s){return(s||"").split(/[^0-9]+/).filter(Boolean).map(Number);}
@@ -506,7 +579,7 @@ function previewHtml(v){if(!v.ok)return"";var t='<table class="tbl" style="min-w
   t+='</tr><tr><th class="lbl">SI</th>';for(i=0;i<18;i++)t+="<td>"+v.si[i]+"</td>";return t+"</tr></tbody></table>";}
 
 function renderCanchas(){var rd=isAdmin()?"":" readonly";
-  var h='<div class="note" style="margin:0">Cargá una sola vez, de la tarjeta de cada club (azules). Escribí los 18 números seguidos, separados por espacio o coma. Una vez guardado lo ven los tres.'+(isAdmin()?"":" Solo Angel puede modificar las canchas.")+'</div>';
+  var h='<div class="note" style="margin:0">Cargá una sola vez, de la tarjeta de cada club. Escribí los 18 números seguidos, separados por espacio o coma. Una vez guardado lo ven los tres.'+(isAdmin()?"":" Solo Angel puede modificar las canchas.")+'</div>';
   DAYS.forEach(function(d){var sv=S.server.courses[d.course],dr=S.draft[d.course];
     var parS=dr?dr.par:(sv&&sv.par?sv.par.join(" "):""),siS=dr?dr.si:(sv&&sv.si?sv.si.join(" "):"");
     var v=validateCourse(parS,siS),has=!!getCourse(d.course);
@@ -539,18 +612,54 @@ function linksCard(){
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest('[data-link="copy"]');if(b)copyText(shareLink());});
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-plink]");if(b&&isAdmin())copyText(plink(b.getAttribute("data-plink")));});
 
+function teeKey(d,p){return d.id+"_"+p.id;}
+function teeSel(d,p){var t=teeFor(p,d),pre=PRESETS[d.course]||[];
+  for(var i=0;i<pre.length;i++)if(pre[i][1]===t.cr&&pre[i][2]===t.slope&&pre[i][3]===t.par)return{sel:String(i),n:pre[i][0],cr:t.cr,slope:t.slope,par:t.par};
+  return{sel:"c",n:t.n,cr:t.cr,slope:t.slope,par:t.par};}
+function teesCard(){
+  var dis=isAdmin()?"":" disabled",dr=S.draftTees||(S.draftTees={});
+  var h='<div class="card"><h2>Salidas (tees) <small>por jugador y día</small></h2><div class="note" style="margin:-4px 0 8px">El handicap de juego se calcula con el CR, slope y par de la salida que usó cada uno. Elegí la salida; si no está en la lista, elegí “Otra…” y cargá los datos de la tarjeta del club.</div>';
+  DAYS.forEach(function(d){var pre=PRESETS[d.course]||[];h+='<div class="conc"><b>'+d.long+" · "+d.name+"</b>";
+    PLAYERS.forEach(function(p){var k=teeKey(d,p),v=dr[k]||(dr[k]=teeSel(d,p));
+      h+='<div class="crow2"><span>'+esc(p.name)+'</span><select data-tsel="'+k+'"'+dis+' aria-label="Salida de '+esc(p.name)+" "+d.label+'">'+
+        pre.map(function(o,i){return'<option value="'+i+'"'+(v.sel===String(i)?" selected":"")+">"+o[0]+" "+cr1(o[1])+" / "+o[2]+"</option>";}).join("")+'<option value="c"'+(v.sel==="c"?" selected":"")+">Otra…</option></select></div>";
+      if(v.sel==="c")h+='<div class="trow"><input type="text" data-tf="'+k+'|n" value="'+esc(v.n)+'" placeholder="Nombre"'+dis+' aria-label="Nombre de la salida"><input type="number" step="0.1" inputmode="decimal" data-tf="'+k+'|cr" value="'+v.cr+'" placeholder="CR"'+dis+' aria-label="Course rating"><input type="number" inputmode="numeric" data-tf="'+k+'|slope" value="'+v.slope+'" placeholder="Slope"'+dis+' aria-label="Slope"><input type="number" inputmode="numeric" data-tf="'+k+'|par" value="'+v.par+'" placeholder="Par"'+dis+' aria-label="Par"></div><div class="note" style="margin:-4px 0 8px">Nombre · CR · Slope · Par</div>';});
+    h+="</div>";});
+  h+='<div id="tees-er"></div><div class="btns" style="margin-top:8px"><button class="btn" id="save-tees"'+(isAdmin()?"":" disabled")+">Guardar salidas</button></div></div>";
+  return h;}
+function wireTees(){
+  function DR(){return S.draftTees||(S.draftTees={});}
+  document.querySelectorAll("[data-tsel]").forEach(function(sel){sel.onchange=function(){
+    var k=sel.getAttribute("data-tsel"),q=k.split("_"),d=dayById(q[0]),pre=PRESETS[d.course]||[],cur=DR()[k]||{};
+    if(sel.value==="c")DR()[k]={sel:"c",n:cur.n||"Otra",cr:cur.cr,slope:cur.slope,par:cur.par};
+    else{var o=pre[+sel.value];DR()[k]={sel:sel.value,n:o[0],cr:o[1],slope:o[2],par:o[3]};}
+    renderAjustes();};});
+  document.querySelectorAll("[data-tf]").forEach(function(inp){inp.oninput=function(){
+    var q=inp.getAttribute("data-tf").split("|"),v=DR()[q[0]];if(!v)return;v[q[1]]=q[1]==="n"?inp.value:(inp.value===""?"":+inp.value);};});
+  var sv=$("save-tees");if(sv)sv.onclick=function(){
+    var map={},err="";
+    DAYS.forEach(function(d){PLAYERS.forEach(function(p){var k=teeKey(d,p),v=DR()[k];if(!v)return;
+      var cr=+v.cr,sl=+v.slope,pa=+v.par;
+      if(!(cr>=55&&cr<=80)||!(sl>=55&&sl<=155)||!(pa>=66&&pa<=74)){err="Revisá "+p.name+" "+d.label+": CR entre 55 y 80, slope entre 55 y 155, par entre 66 y 74.";return;}
+      if(cr===d.cr&&sl===d.slope&&pa===d.par)return;
+      map[k]={n:(v.n||"Otra"),cr:cr,slope:sl,par:pa};});});
+    if(err){$("tees-er").innerHTML='<div class="er">'+esc(err)+"</div>";return;}
+    writeDoc("tees","all",{map:map},"Salidas guardadas",function(){S.draftTees=null;renderAjustes();});};
+}
 function renderAjustes(){
   var dis=isAdmin()?"":" disabled",m=computeModel(),cfg=S.server.config.main||{},dr=S.draftAj||{ins:typeof cfg.inscripcion==="number"?cfg.inscripcion:DEFAULT_INS,ov:cfg.hcOverrides||{}};
   var h='<div class="card"><h2>Inscripción</h2><div class="fields"><label class="f">Inscripción por jugador (pesos)<input type="number" inputmode="numeric" id="ins" value="'+dr.ins+'"'+dis+'></label>'+
     '<div class="note" style="margin:0">Pozo: '+money(dr.ins*PLAYERS.length)+' entre los tres. Se reparte 10% a cada ganador diario (30%), 50% al 1° general y 20% al 2°.</div></div></div>';
   h+=linksCard();
+  h+=teesCard();
   h+='<div class="card"><h2>Handicap de juego <small>vacío = automático</small></h2><div class="ovg"><span></span>'+PLAYERS.map(function(p){return'<span class="h">'+esc(p.name)+"</span>";}).join("");
   m.days.forEach(function(x){h+='<span class="muted" style="font-size:13px">'+x.d.label+"</span>";
     PLAYERS.forEach(function(p){var k=x.d.id+"_"+p.id,v=dr.ov[k];h+='<input type="number" inputmode="numeric" data-ov="'+k+'"'+dis+' value="'+(typeof v==="number"?v:"")+'" placeholder="'+x.res[p.id].auto+'" aria-label="HC '+esc(p.name)+" "+x.d.label+'">';});});
   h+='</div><div class="note">Automático: '+allowTxt()+' × (Índice × Slope ÷ 113 + CR − Par), redondeado al final. El de Mauri incluye el ajuste de los días anteriores. Usá el manual solo si el club da otro número.</div>'+
     '<div class="btns" style="margin-top:12px"><button class="btn" id="save-aj"'+(isAdmin()?"":" disabled")+'>Guardar ajustes</button></div></div>';
   h+='<div class="card"><h2>Reglas</h2><ul class="rules"><li>Stableford neto: doble bogey neto o peor 0, bogey 1, par 2, birdie 3, eagle 4. Si ya no suma, se levanta la pelota.</li>'+
-    "<li>Inscripción de $100.000 por jugador. Índices: Angel 25,0 · Fede 27,9 · Mauri 45,2. Salidas azules los tres días. Handicap de juego: "+allowTxt()+" del handicap de cancha.</li>"+
+    "<li>Inscripción de $100.000 por jugador. Índices: Angel 25,0 · Fede 27,9 · Mauri 45,2. Handicap de juego: "+allowTxt()+" del handicap de cancha de la salida (tee) que usó cada uno: si salen de distinta salida, cada uno usa el CR, slope y par de la suya.</li>"+
+    "<li>Tarjeta oficial: la lleva el marcador (Angel marca a Fede, Fede a Mauri, Mauri a Angel) y es la única que cuenta para las posiciones. Cada jugador anota además su autocontrol, que no suma y sirve para detectar diferencias. Solo Angel, como administrador, puede corregir una tarjeta oficial.</li>"+
     "<li>Recalibración de Mauri al cerrar cada día: se compara con el promedio de Angel y Fede. Con 6 o más puntos de diferencia ajusta 2 golpes, con 12 o más 4 (máximo por día). Si Mauri hace más, baja; si hace menos, sube. El ajuste se acumula y cada día se puntúa con el handicap de ese día.</li>"+
     "<li>Premios: ganador de cada día, y 1° y 2° general por suma de los 3 días. Desempate: últimos 9, 6, 3 y hoyo 18. Si sigue el empate, se reparte.</li><li>Concursos diarios (best approach y long drive): el ganador cobra $5.000 de cada uno de los otros dos.</li></ul></div>";
   $("v-ajustes").innerHTML=h;
@@ -558,6 +667,7 @@ function renderAjustes(){
     var ins=+$("ins").value;return{ins:ins>0?ins:DEFAULT_INS,ov:ov};}
   document.querySelectorAll("#v-ajustes input").forEach(function(i){i.oninput=function(){S.draftAj=grab();};});
   $("save-aj").onclick=function(){var g=grab();writeDoc("config","main",{inscripcion:g.ins,hcOverrides:g.ov,updatedAt:Date.now()},"Ajustes guardados",function(){S.draftAj=null;});};
+  wireTees();
 }
 
 /* ---------- render y eventos ---------- */
@@ -581,12 +691,15 @@ $("v-tarjeta").addEventListener("click",function(e){
   if((el=e.target.closest("[data-hole]"))){S.ui.hole=+el.dataset.hole;saveUi();render();return;}
   if((el=e.target.closest("[data-goto]"))){S.ui.hole=+el.dataset.goto;saveUi();render();window.scrollTo({top:0,behavior:"smooth"});return;}
   if((el=e.target.closest("[data-nav]"))){var n=S.ui.hole+ +el.dataset.nav;if(n>18){setTab("posiciones");return;}if(n<1)return;S.ui.hole=n;saveUi();render();return;}
+  if((el=e.target.closest("[data-adminedit]"))){S.adminEdit=!!el.checked;render();return;}
   if((el=e.target.closest("[data-act]"))){
-    var row=el.closest(".prow");if(!row||S.readOnly||!canEdit(row.dataset.p))return;
-    var pid=row.dataset.p,day=S.ui.day,hole=S.ui.hole,g=gross(day,pid,hole),course=getCourse(dayById(day).course),par=course?course.par[hole-1]:4,a=el.dataset.act;
-    if(a==="pick")setHole(day,pid,hole,g===0?null:0);
-    else if(a==="inc")setHole(day,pid,hole,(g===null||g===0)?par:Math.min(15,g+1));
-    else if(a==="dec")setHole(day,pid,hole,(g===null||g===0)?par:(g<=1?null:g-1));
+    var row=el.closest(".prow");if(!row||S.readOnly)return;
+    var self=row.dataset.s==="1",pid=row.dataset.p;
+    if(self?!(S.me&&S.me.player===pid):!canMark(pid))return;
+    var day=S.ui.day,hole=S.ui.hole,g=self?selfv(day,pid,hole):gross(day,pid,hole),course=getCourse(dayById(day).course),par=course?course.par[hole-1]:4,a=el.dataset.act,kind=self?"selfs":"rounds";
+    if(a==="pick")setHole(day,pid,hole,g===0?null:0,kind);
+    else if(a==="inc")setHole(day,pid,hole,(g===null||g===0)?par:Math.min(15,g+1),kind);
+    else if(a==="dec")setHole(day,pid,hole,(g===null||g===0)?par:(g<=1?null:g-1),kind);
   }
 });
 
@@ -599,7 +712,7 @@ function start(store){
     if(!S.fresh)S.fresh=true;clearTimeout(timer);
     if(S.sync==="connecting"||S.sync==="stale"||S.sync==="err")setSync("live");
     render();}
-  ["rounds","courses","config","extras"].forEach(function(c){store.sub(c,function(d,m){got(c,d,m);});});
+  ["rounds","courses","config","extras","selfs","tees"].forEach(function(c){store.sub(c,function(d,m){got(c,d,m);});});
   store.status=function(ok){if(ok){clearTimeout(timer);if(S.sync==="connecting"||S.sync==="stale"||S.sync==="err")setSync("live");}else if(S.sync!=="saving")setSync("err");};
   store.onBad=function(){try{localStorage.removeItem("copa-code");}catch(e){}S.store=null;gate("La clave del torneo no es válida. Pedile el link a Angel.");};
   timer=setTimeout(function(){if(!S.fresh){setSync("stale");toast("El torneo no responde todavía. Mostrando lo último guardado.");}},10000);
@@ -612,11 +725,14 @@ function gate(msg){
     try{localStorage.setItem("copa-code",v);}catch(e){}
     g.hidden=true;document.querySelector(".tabs").hidden=false;S.gate=false;boot(v);render();};
 }
-function boot(code){S.code=code;S.pending=loadPending();S.me=null;S.links=null;start(makeSB(code));
+function boot(code){S.code=code;S.pending=loadPending();S.pendingS=loadPendingS();S.me=null;S.links=null;start(makeSB(code));
   if(!S.key){S.readOnly=true;setSync(S.sync);render();return;}
   (function auth(){rpc("copa_whoami",{p_code:code,p_token:S.key}).then(function(me){
       S.me=me;S.readOnly=false;setSync(S.sync);render();
-      Object.keys(S.pending).forEach(function(k){if(S.pending[k]&&Object.keys(S.pending[k]).length){var p=k.split("_");schedule(p[0],p[1]);}});
+      Object.keys(S.pending).forEach(function(k){var pid=k.split("_")[1];if(!(me.admin||canMark(pid)))delete S.pending[k];});
+      Object.keys(S.pendingS).forEach(function(k){if(k.split("_")[1]!==me.player)delete S.pendingS[k];});
+      savePending();
+      [["rounds",S.pending],["selfs",S.pendingS]].forEach(function(z){Object.keys(z[1]).forEach(function(k){if(z[1][k]&&Object.keys(z[1][k]).length){var p=k.split("_");schedule(p[0],p[1],z[0]);}});});
       if(me.admin)rpc("copa_links",{p_code:code,p_token:S.key}).then(function(l){S.links=l;render();},function(){});
     },function(e){
       if(e&&e.code==="bad_key"){S.readOnly=true;setSync(S.sync);render();}
