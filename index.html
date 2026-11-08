@@ -137,6 +137,18 @@ textarea{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--l
 .chk{display:flex;align-items:center;gap:8px;font-size:13px;margin:0 0 8px}
 .chk input{width:20px;height:20px}
 .who i{font-style:normal}
+.alm{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px}
+.alm .box{background:var(--surface);color:var(--ink);border:5px solid var(--bad);border-radius:16px;padding:20px 18px;max-width:380px;width:100%;text-align:center;animation:almshake .5s}
+.alm .almico{font-size:56px;line-height:1;text-align:center}
+.alm h2{font-family:var(--f-d);font-size:32px;text-transform:uppercase;color:var(--bad);margin:6px 0 10px;letter-spacing:.02em}
+.alm .cmp{display:flex;gap:10px;margin:12px 0}
+.alm .cmp div{flex:1;background:var(--p0-bg);color:var(--p0-fg);border-radius:10px;padding:8px 4px}
+.alm .cmp b{display:block;font-size:38px;font-family:var(--f-d);line-height:1.1}
+.alm .cmp span{font-size:12px}
+.alm p{margin:8px 0}
+.alm .btns{display:grid;gap:8px;margin-top:14px}
+@keyframes almshake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.alm .box{animation:none}}
 
 label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 input[type=text],input[type=number],input[inputmode]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}
@@ -681,7 +693,57 @@ function render(){
   else if(t==="tarjeta")renderCard();
   else if(t==="canchas"){if(idleIn($("v-canchas")))renderCanchas();}
   else if(t==="ajustes"){if(idleIn($("v-ajustes")))renderAjustes();}
+  checkAlert();
 }
+/* Aviso grande cuando el autocontrol no coincide con la tarjeta oficial (a los involucrados y al admin) */
+function alertList(){var out=[];if(!S.me)return out;
+  DAYS.forEach(function(d){PLAYERS.forEach(function(p){
+    if(!(S.me.admin||S.me.player===p.id||S.me.marks===p.id))return;
+    diffs(d.id,p.id).forEach(function(q){out.push({day:d.id,pid:p.id,h:q.h,o:q.o,s:q.s,key:[d.id,p.id,q.h,q.o,q.s].join("|")});});});});
+  return out;}
+function loadAck(){try{return JSON.parse(localStorage.getItem("copa-ack")||"[]")||[];}catch(e){return[];}}
+function saveAck(a){try{localStorage.setItem("copa-ack",JSON.stringify(a.slice(-200)));}catch(e){}}
+function pendingAlerts(){var ack=loadAck();return alertList().filter(function(x){return ack.indexOf(x.key)<0;});}
+function checkAlert(){
+  if(document.getElementById("alm"))return;
+  var todo=pendingAlerts(),sig=todo.map(function(x){return x.key;}).join(",");
+  if(!todo.length){clearTimeout(S.almT);S.almSig="";return;}
+  if(S.almSig===sig)return;
+  S.almSig=sig;clearTimeout(S.almT);S.almT=setTimeout(showAlert,1800);}
+function vozOn(){try{return localStorage.getItem("copa-voz")!=="0";}catch(e){return true;}}
+function sirena(){try{var C=window.AudioContext||window.webkitAudioContext;if(!C)return;var c=new C(),t=c.currentTime;if(c.resume)c.resume();
+  [880,620,880,620].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.type="square";o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(c.destination);o.start(t+i*.16);o.stop(t+i*.16+.14);});
+  setTimeout(function(){try{c.close();}catch(e){}},1200);}catch(e){}}
+function hablar(txt){try{if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return;var u=new SpeechSynthesisUtterance(txt);u.lang="es-AR";u.rate=1.02;u.pitch=1;u.volume=1;
+  var vs=speechSynthesis.getVoices()||[],v=null;for(var i=0;i<vs.length;i++){if(/^es[-_]AR/i.test(vs[i].lang)){v=vs[i];break;}}
+  if(!v)for(i=0;i<vs.length;i++){if(/^es/i.test(vs[i].lang)){v=vs[i];break;}}
+  if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function sayG(g){return g===0?"levantó":String(g);}
+function showAlert(){
+  if(document.getElementById("alm"))return;
+  var todo=pendingAlerts();if(!todo.length)return;
+  var x=todo[0],p=playerById(x.pid),mk=markerOf(x.pid),mkn=mk?playerById(mk).name:"su marcador",d=dayById(x.day),msg;
+  if(S.me.player===x.pid)msg="Lo que anotaste vos no coincide con lo que cargó "+mkn+" en tu tarjeta oficial.";
+  else if(S.me.marks===x.pid)msg="Lo que cargaste de "+p.name+" no coincide con su autocontrol.";
+  else msg="La tarjeta oficial de "+p.name+" no coincide con su autocontrol.";
+  var left=todo.length-1,el=document.createElement("div");
+  el.className="alm";el.id="alm";el.setAttribute("role","alertdialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-labelledby","alm-t");
+  el.innerHTML='<div class="box"><div class="almico">⚠️</div><h2 id="alm-t">¡No coincide!</h2><div><b>'+esc(p.name)+" · hoyo "+x.h+"</b> · "+esc(d.label)+'</div>'+
+    '<div class="cmp"><div><b>'+showG(x.s)+"</b><span>Autocontrol de "+esc(p.name)+"</span></div><div><b>"+showG(x.o)+"</b><span>Tarjeta oficial</span></div></div>"+
+    "<p>"+esc(msg)+" Revísenlo ahora, antes de seguir jugando.</p>"+(left>0?'<p class="muted">Hay '+left+(left>1?" diferencias más":" diferencia más")+".</p>":"")+
+    '<label class="chk" style="justify-content:center;margin:10px 0 0"><input type="checkbox" id="alm-voz"> Voz de alerta</label>'+
+    '<div class="btns"><button class="btn" id="alm-go">Ir a ese hoyo</button><button class="btn" id="alm-ok" style="background:var(--surface2);color:var(--ink)">Entendido</button></div></div>';
+  document.body.appendChild(el);
+  try{if(navigator.vibrate)navigator.vibrate([250,120,250,120,250]);}catch(e){}
+  var frase="¡Pará, boludo! No coinciden. Hoyo "+x.h+", "+p.name+". El autocontrol dice "+sayG(x.s)+" y la tarjeta oficial dice "+sayG(x.o)+". Revisenlo.";
+  var vz=$("alm-voz");vz.checked=vozOn();
+  vz.onchange=function(){try{localStorage.setItem("copa-voz",vz.checked?"1":"0");}catch(e){}if(vz.checked){sirena();hablar(frase);}else{try{speechSynthesis.cancel();}catch(e){}}};
+  if(vozOn()){sirena();setTimeout(function(){if(document.getElementById("alm"))hablar(frase);},700);}
+  function close(go){var a=loadAck();a.push(x.key);saveAck(a);el.remove();try{speechSynthesis.cancel();}catch(e){}
+    if(go){S.ui.day=x.day;S.ui.hole=x.h;S.ui.tab="tarjeta";saveUi();render();window.scrollTo(0,0);}
+    S.almSig="";checkAlert();}
+  $("alm-go").onclick=function(){close(true);};$("alm-ok").onclick=function(){close(false);};
+  $("alm-ok").focus();}
 function setTab(t){S.ui.tab=t;saveUi();try{history.replaceState(null,"","#"+t);}catch(e){}render();window.scrollTo(0,0);}
 document.querySelector(".tabs").addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b)setTab(b.dataset.tab);});
 
