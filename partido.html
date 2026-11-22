@@ -362,7 +362,8 @@ function matchCard(m){
     '</div>'+(m.err?"":'<div class="dots">'+dots+'</div>')+'</div>';
 }
 function partidoView(){
-  var ms=matches(),h="";
+  var ms=matches(),pr=S.game.mode==="match_pairs",h='<div class="seg" id="modeSeg" style="margin-top:12px"><button type="button" data-m="match_ind" aria-pressed="'+(!pr)+'">Individual</button><button type="button" data-m="match_pairs" aria-pressed="'+pr+'">Parejas</button></div>';
+  if(pr&&S.players.length>=2&&!S.players.some(function(p){return p.team==="B";}))h+='<div class="note warn">Todos están en la Pareja A. Armá las parejas en <b>Jugadores</b>.</div>';
   if(S.players.length<2)h+='<div class="note warn">Esperando jugadores. Compartí el link para que entren los demás.</div>';
   else h+=ms.map(matchCard).join("");
   h+='<div class="row" style="margin-top:12px"><button class="btn p" id="goCard">Cargar golpes</button><button class="btn" id="share">Compartir link</button></div>';
@@ -399,6 +400,9 @@ function copy(t){
   function fb(){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("Copiado");}catch(e){toast("No se pudo copiar");}a.remove();}
 }
 function wirePartido(){
+  $("modeSeg").onclick=function(e){var b=e.target.closest("button");if(!b)return;var m=b.getAttribute("data-m");if(m===S.game.mode)return;
+    if(!confirm(m==="match_pairs"?"¿Pasar a match por parejas (90%)?":"¿Pasar a match individual (100%)?"))return;
+    rpc("pm_game_update",{p_code:S.code,p_token:myTok().token,p_mode:m,p_allowance:MODES[m].allow}).then(function(){toast("Modalidad cambiada");poll();}).catch(function(e){toast(e.message);});};
   $("goCard").onclick=function(){setTab("tarjeta");};
   $("share").onclick=function(){var u=location.origin+location.pathname+"?p="+S.code,t="Entrá al partido: "+u;
     if(navigator.share)navigator.share({title:"Partido de golf",text:t,url:u}).catch(function(){});else copy(u);};
