@@ -106,6 +106,22 @@ td.l,th.l{text-align:left}
 .list .item span{font-size:12px;color:var(--muted)}
 .ok{color:var(--good)}.bad{color:var(--bad)}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:90%}
+.lu{display:flex;gap:8px;margin-top:10px}
+.lu .col{flex:1;min-width:0;border-radius:10px;padding:8px;background:var(--s2)}
+.lu .col.A{background:var(--a-soft)}.lu .col.B{background:var(--b-soft)}
+.lu .col h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.lu .col.A h4{color:var(--a)}.lu .col.B h4{color:var(--b)}
+.lu .who{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:8px;padding:6px 8px;margin-top:4px;font-size:14px}
+.lu .who b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.lu .who span{font:600 12px var(--mono);color:var(--muted)}
+.lu .who button{border:0;background:var(--s2);color:var(--ink);border-radius:6px;width:30px;height:28px;font-size:14px;cursor:pointer}
+.lu .empty{font-size:12px;color:var(--muted);padding:6px 2px}
+.big{font:700 15px var(--ui)}
+.calc{display:flex;gap:8px;margin-top:10px}
+.calc div{flex:1;background:var(--s2);border-radius:10px;padding:8px 10px;text-align:center}
+.calc span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.calc b{font:700 22px var(--mono)}
+.link{background:none;border:0;color:var(--accent);font:600 13px var(--ui);padding:8px 0 0;cursor:pointer}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -245,7 +261,7 @@ function applyState(st){
   var sc={};(st.scores||[]).forEach(function(r){sc[r.player_id+"_"+r.hole]=r.strokes;});S.scores=sc;
   var t=myTok();S.me=t?S.players.filter(function(p){return p.id===t.id;})[0]||null:null;
   if(t&&!S.me){ls(tokKey(),{});}
-  render();
+  render(true);
 }
 var flushT=null;
 function setScore(pid,h,v){S.pending[pid+"_"+h]=v;ls("pm-pend:"+S.code,S.pending);render();clearTimeout(flushT);flushT=setTimeout(flush,400);}
@@ -260,22 +276,27 @@ function flush(){
 }
 
 /* ---------- render general ---------- */
-function setTab(t){S.tab=t;try{history.replaceState(null,"",location.pathname+location.search+"#"+t);}catch(e){}render();window.scrollTo(0,0);}
-function render(){
+function setTab(t){S.tab=t;S.dirty=false;try{history.replaceState(null,"",location.pathname+location.search+"#"+t);}catch(e){}render();window.scrollTo(0,0);}
+function formBusy(){var a=document.activeElement,v=$("view");return S.dirty||!!(a&&v.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName));}
+// soft = redibujo por datos del servidor: nunca pisa lo que se está escribiendo
+function render(soft){
   var v=$("view");
-  if(S.editing){$("tabs").hidden=!S.code||!S.me;$("nav").hidden=true;v.innerHTML=courseEditor();wireEditor();return;}
-  if(!S.code){$("tabs").hidden=true;$("nav").hidden=true;$("hTitle").textContent="Partido de golf";$("hSub").textContent="match play con handicap";v.innerHTML=homeView();wireHome();return;}
+  if(S.editing){if(soft)return;$("tabs").hidden=!S.code||!S.me;$("nav").hidden=true;v.innerHTML=courseEditor();wireEditor();return;}
+  if(!S.code){if(soft)return;$("tabs").hidden=true;$("nav").hidden=true;$("hTitle").textContent="Partido de golf";$("hSub").textContent="match play con handicap";v.innerHTML=homeView();wireHome();return;}
   if(!S.game){v.innerHTML='<div class="card">Cargando partido…</div>';return;}
   $("hTitle").textContent=S.game.name||S.course.name;
   $("hSub").textContent=(S.course?S.course.name:"")+" · "+MODES[S.game.mode].short;
-  if(!S.me){$("tabs").hidden=true;$("nav").hidden=true;v.innerHTML=joinView();wireJoin();return;}
+  if(!S.me){$("tabs").hidden=true;$("nav").hidden=true;
+    if(soft&&$("panel")){$("panel").innerHTML=panelInner(false);wirePanel(false);updJoin();return;}
+    v.innerHTML=joinView();wireJoin();return;}
   $("tabs").hidden=false;
   Array.prototype.forEach.call($("tabs").children,function(b){b.setAttribute("aria-selected",b.getAttribute("data-tab")===S.tab?"true":"false");});
   $("nav").hidden=(S.tab!=="tarjeta");
-  if(S.tab==="partido"){if(!idle(v))return;v.innerHTML=partidoView();wirePartido();}
+  if(soft&&formBusy())return;
+  if(S.tab==="partido"){v.innerHTML=partidoView();wirePartido();}
   else if(S.tab==="tarjeta"){v.innerHTML=tarjetaView();wireTarjeta();}
-  else if(S.tab==="jugadores"){if(!idle(v))return;v.innerHTML=jugadoresView();wireJugadores();}
-  else if(S.tab==="canchas"){if(!idle(v))return;v.innerHTML=canchasView();wireCanchas();}
+  else if(S.tab==="jugadores"){v.innerHTML=jugadoresView();wireJugadores();}
+  else if(S.tab==="canchas"){v.innerHTML=canchasView();wireCanchas();}
 }
 function idle(el){var a=document.activeElement;return !(a&&el.contains(a)&&/INPUT|SELECT|TEXTAREA/.test(a.tagName));}
 
@@ -306,23 +327,58 @@ function wireHome(){
 
 /* ---------- ingreso ---------- */
 function teeOptions(sel){return (S.course.tees||[]).map(function(t){return '<option value="'+esc(t.name)+'"'+(t.name===sel?" selected":"")+'>'+esc(t.name)+(t.cr!=null?" · "+f1(t.cr)+" / "+t.slope:" · sin rating")+'</option>';}).join("");}
+// Panel: modalidad + quiénes juegan. Va arriba en la entrada y en Partido.
+function panelInner(joined){
+  var pr=S.game.mode==="match_pairs",al=allow(),c=S.course;
+  function who(p){var ph=playHc(p,c,al),mine=S.me&&S.me.id===p.id;
+    return '<div class="who"><b>'+esc(p.name)+(mine?" (vos)":"")+'</b><span>'+(ph==null?"?":ph)+'</span>'+
+      (joined&&pr?'<button data-sw="'+p.id+'" aria-label="Cambiar de pareja">⇄</button>':'')+'</div>';}
+  var ps=sortedPlayers(),lu;
+  if(pr){var A=ps.filter(function(p){return p.team!=="B";}),B=ps.filter(function(p){return p.team==="B";});
+    lu='<div class="lu"><div class="col A"><h4>Pareja A</h4>'+(A.map(who).join("")||'<div class="empty">Nadie todavía</div>')+'</div>'+
+       '<div class="col B"><h4>Pareja B</h4>'+(B.map(who).join("")||'<div class="empty">Nadie todavía</div>')+'</div></div>';}
+  else lu='<div class="lu"><div class="col"><h4>Jugadores</h4>'+(ps.map(who).join("")||'<div class="empty">Nadie todavía</div>')+'</div></div>';
+  return '<div class="seg" id="modeSeg"><button type="button" class="big" data-m="match_ind" aria-pressed="'+(!pr)+'">Individual</button><button type="button" class="big" data-m="match_pairs" aria-pressed="'+pr+'">Parejas</button></div>'+
+    '<p class="sub" style="margin:8px 0 0">'+(pr?"Mejor pelota neta, al "+Math.round(al*100)+"%. Golpes contra el más bajo de los cuatro.":"Todos contra todos, de a dos, al "+Math.round(al*100)+"%. El de handicap más alto recibe la diferencia.")+
+    ' El número es el handicap de juego.</p>'+lu;
+}
+function panelCard(joined){return '<div class="card" id="panel">'+panelInner(joined)+'</div>';}
+function wirePanel(joined){
+  $("modeSeg").onclick=function(e){var b=e.target.closest("button");if(!b)return;var m=b.getAttribute("data-m");if(m===S.game.mode)return;
+    var t=myTok(),pr=t?rpc("pm_game_update",{p_code:S.code,p_token:t.token,p_mode:m,p_allowance:MODES[m].allow}):rpc("pm_game_mode_open",{p_code:S.code,p_mode:m});
+    S.game.mode=m;S.game.allowance=MODES[m].allow;render(!joined);
+    pr.then(function(){toast(m==="match_pairs"?"Match por parejas":"Match individual");poll();}).catch(function(e){toast(e.message);poll();});};
+  document.querySelectorAll("[data-sw]").forEach(function(b){b.onclick=function(){var p=S.players.filter(function(x){return x.id===b.getAttribute("data-sw");})[0];if(!p)return;
+    var nt=p.team==="B"?"A":"B";p.team=nt;render();
+    rpc("pm_player_update",{p_code:S.code,p_token:myTok().token,p_player:p.id,p_name:p.name,p_hi:p.hi,p_tee:p.tee,p_team:nt,p_ch_manual:p.ch_manual})
+    .then(function(){poll();}).catch(function(e){toast(e.message);poll();});};});
+}
 function joinView(){
-  var last=ls("pm-last")||{},pairs=S.game.mode==="match_pairs";
-  var inGame=S.players.map(function(p){return '<span class="chip '+(pairs?p.team:"")+'">'+esc(p.name)+'</span>';}).join(" ");
-  return '<h2>Entrar al partido</h2><p class="sub">'+esc(S.course.name)+' · '+MODES[S.game.mode].name+'</p>'+
-  (inGame?'<div class="chips">'+inGame+'</div>':'')+
-  '<div class="card"><label class="f"><span>Tu nombre</span><input id="jName" value="'+esc(last.name||"")+'" autocomplete="nickname"></label>'+
-  '<div class="row"><label class="f"><span>Handicap Index</span><input id="jHi" inputmode="decimal" value="'+esc(last.hi!=null?String(last.hi).replace(".",","):"")+'"></label>'+
-  '<label class="f"><span>Salida</span><select id="jTee">'+teeOptions(last.tee||defaultTee())+'</select></label></div>'+
-  (pairs?'<label class="f"><span>Pareja</span><div class="seg ab" id="jTeam"><button type="button" data-v="A" aria-pressed="true">Pareja A</button><button type="button" data-v="B" aria-pressed="false">Pareja B</button></div></label>':'')+
-  '<label class="f"><span>Handicap de cancha manual (opcional)</span><input id="jCh" inputmode="numeric" placeholder="Solo si la salida no tiene rating cargado"></label>'+
-  '<div class="note" id="jCalc"></div>'+
-  '<button class="btn p w" id="jGo">Entrar</button></div>'+
-  '<p class="note">También podés cargar a un amigo que no tenga el celular: entrás vos, y desde <b>Jugadores</b> lo agregás.</p>';
+  var last=ls("pm-last")||{};
+  if(!S.jd)S.jd={name:last.name||"",hi:last.hi!=null?String(last.hi).replace(".",","):"",tee:last.tee&&teeOf(S.course,last.tee)?last.tee:defaultTee(),team:"A",ch:"",showCh:false};
+  var d=S.jd,pr=S.game.mode==="match_pairs",t=teeOf(S.course,d.tee),noRating=!t||t.cr==null;
+  return panelCard(false)+
+  '<h2>Tus datos</h2><div class="card">'+
+  '<label class="f"><span>Nombre</span><input id="jName" value="'+esc(d.name)+'" autocomplete="nickname" enterkeyhint="next"></label>'+
+  '<div class="row"><label class="f"><span>Handicap Index</span><input id="jHi" inputmode="decimal" value="'+esc(d.hi)+'" enterkeyhint="done"></label>'+
+  '<label class="f"><span>Salida</span><select id="jTee">'+teeOptions(d.tee)+'</select></label></div>'+
+  '<div id="jTeamWrap"'+(pr?'':' hidden')+'><label class="f"><span>Tu pareja</span></label><div class="seg ab" id="jTeam"><button type="button" class="big" data-v="A" aria-pressed="'+(d.team!=="B")+'">Pareja A</button><button type="button" class="big" data-v="B" aria-pressed="'+(d.team==="B")+'">Pareja B</button></div></div>'+
+  '<div id="jChWrap"'+(noRating||d.showCh?'':' hidden')+'><label class="f"><span>Handicap de cancha (de la tabla del club)</span><input id="jCh" inputmode="numeric" value="'+esc(d.ch)+'" enterkeyhint="done"></label></div>'+
+  '<div class="calc" id="jCalc"></div><p class="sub" id="jWarn" style="margin-top:6px"></p>'+
+  '<button class="link" id="jShowCh"'+(noRating||d.showCh?' hidden':'')+'>Prefiero poner el handicap de cancha a mano</button>'+
+  '<button class="btn p w" id="jGo">Entrar al partido</button></div>';
 }
 function defaultTee(){var t=S.course.tees||[];for(var i=0;i<t.length;i++)if(/amar/i.test(t[i].name))return t[i].name;return t[0]&&t[0].name;}
-function readJoin(){var team="A";var tb=document.querySelector("#jTeam [aria-pressed=true]");if(tb)team=tb.getAttribute("data-v");
-  var ch=$("jCh").value.trim();return {name:$("jName").value.trim(),hi:num($("jHi").value),tee:$("jTee").value,team:team,ch_manual:ch===""?null:parseInt(ch,10)};}
+function readJoin(){var d=S.jd,ch=String(d.ch||"").trim();return {name:String(d.name||"").trim(),hi:num(d.hi),tee:d.tee,team:d.team,ch_manual:ch===""?null:parseInt(ch,10)};}
+function updJoin(){
+  if(!$("jCalc"))return;var p=readJoin(),t=teeOf(S.course,p.tee),noR=!t||t.cr==null,al=allow();
+  $("jTeamWrap").hidden=S.game.mode!=="match_pairs";
+  if(noR){$("jChWrap").hidden=false;$("jShowCh").hidden=true;}
+  var ch=courseHc(p,S.course);if(p.ch_manual==null&&!isFinite(p.hi))ch=null;
+  $("jCalc").innerHTML='<div><span>Hcp de cancha</span><b>'+(ch==null?"–":ch)+'</b></div><div><span>Hcp de juego ('+Math.round(al*100)+'%)</span><b>'+(ch==null?"–":Math.round(ch*al))+'</b></div>';
+  $("jWarn").innerHTML=(noR&&p.ch_manual==null)?'<span class="bad">La salida '+esc(p.tee)+' no tiene rating cargado: poné el handicap de cancha de la tabla del club.</span>':
+    (p.ch_manual==null&&isFinite(p.hi)&&t?f1(p.hi)+" × "+t.slope+" ÷ 113 + ("+f1(t.cr)+" − "+t.par+")":"");
+}
 function calcHtml(p){
   var t=teeOf(S.course,p.tee);
   if(p.ch_manual!=null&&isFinite(p.ch_manual))return "Handicap de cancha manual: <b>"+p.ch_manual+"</b>. Handicap de juego ("+Math.round(allow()*100)+"%): <b>"+Math.round(p.ch_manual*allow())+"</b>.";
@@ -333,16 +389,20 @@ function calcHtml(p){
     "<br>Handicap de juego al "+Math.round(allow()*100)+"%: <b>"+Math.round(ch*allow())+"</b>";
 }
 function wireJoin(){
-  function upd(){$("jCalc").innerHTML=calcHtml(readJoin());}
-  ["jHi","jTee","jCh"].forEach(function(id){$(id).oninput=upd;$(id).onchange=upd;});
-  var tm=$("jTeam");if(tm)tm.onclick=function(e){var b=e.target.closest("button");if(!b)return;tm.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});};
-  upd();
+  wirePanel(false);
+  function bind(id,k){$(id).addEventListener("input",function(){S.jd[k]=this.value;updJoin();});$(id).addEventListener("change",function(){S.jd[k]=this.value;updJoin();});}
+  bind("jName","name");bind("jHi","hi");bind("jTee","tee");bind("jCh","ch");
+  $("jTeam").onclick=function(e){var b=e.target.closest("button");if(!b)return;S.jd.team=b.getAttribute("data-v");$("jTeam").querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});};
+  $("jShowCh").onclick=function(){S.jd.showCh=true;$("jChWrap").hidden=false;this.hidden=true;$("jCh").focus();};
+  updJoin();
   $("jGo").onclick=function(){
-    var p=readJoin();if(!p.name){toast("Poné tu nombre");return;}
+    var p=readJoin();if(!p.name){toast("Poné tu nombre");$("jName").focus();return;}
     if(!isFinite(p.hi)&&p.ch_manual==null){toast("Poné tu handicap");return;}
+    var t=teeOf(S.course,p.tee);if((!t||t.cr==null)&&p.ch_manual==null){toast("Poné tu handicap de cancha");$("jCh").focus();return;}
     var b=this;b.disabled=true;
-    rpc("pm_join",{p_code:S.code,p_name:p.name,p_hi:isFinite(p.hi)?p.hi:null,p_tee:p.tee,p_team:p.team,p_ch_manual:p.ch_manual})
-    .then(function(r){ls(tokKey(),{id:r.player_id,token:r.token});ls("pm-last",{name:p.name,hi:isFinite(p.hi)?p.hi:null,tee:p.tee});remember();S.tab="partido";poll();})
+    rpc("pm_join",{p_code:S.code,p_name:p.name,p_hi:isFinite(p.hi)?p.hi:null,p_tee:p.tee,p_team:S.game.mode==="match_pairs"?p.team:"A",p_ch_manual:p.ch_manual})
+    .then(function(r){ls(tokKey(),{id:r.player_id,token:r.token});ls("pm-last",{name:p.name,hi:isFinite(p.hi)?p.hi:null,tee:p.tee});remember();S.tab="partido";S.jd=null;
+      if(document.activeElement)document.activeElement.blur();poll();})
     .catch(function(e){b.disabled=false;toast(e.message);});
   };
 }
@@ -351,7 +411,8 @@ function remember(){var r=(ls("pm-recent")||[]).filter(function(x){return x.code
 
 /* ---------- partido ---------- */
 function sideName(arr){return arr.map(function(p){return esc(p.name);}).join(" + ");}
-function sideHc(m,arr){if(!m.recv)return "";return arr.map(function(p){var r=m.recv(p);return r>0?"recibe "+r:"juega en 0";}).join(" · ");}
+function sideHc(m,arr){if(!m.recv)return "";var r=arr.map(function(p){return m.recv(p);});
+  if(r.length===1)return r[0]>0?"recibe "+r[0]:"juega en 0";return "recibe "+r.join(" / ");}
 function matchCard(m){
   var s=statusTxt(m),pairs=S.game.mode==="match_pairs";
   var dots=(m.holes||[]).map(function(x){return '<div class="dot '+(x.r||"")+'">'+x.h+'</div>';}).join("");
@@ -362,12 +423,12 @@ function matchCard(m){
     '</div>'+(m.err?"":'<div class="dots">'+dots+'</div>')+'</div>';
 }
 function partidoView(){
-  var ms=matches(),pr=S.game.mode==="match_pairs",h='<div class="seg" id="modeSeg" style="margin-top:12px"><button type="button" data-m="match_ind" aria-pressed="'+(!pr)+'">Individual</button><button type="button" data-m="match_pairs" aria-pressed="'+pr+'">Parejas</button></div>';
-  if(pr&&S.players.length>=2&&!S.players.some(function(p){return p.team==="B";}))h+='<div class="note warn">Todos están en la Pareja A. Armá las parejas en <b>Jugadores</b>.</div>';
+  var ms=matches(),pr=S.game.mode==="match_pairs",h=panelCard(true);
+  if(pr&&S.players.length>=2&&!S.players.some(function(p){return p.team==="B";}))h+='<div class="note warn">Todos están en la Pareja A. Tocá ⇄ al lado de un nombre para pasarlo a la B.</div>';
   if(S.players.length<2)h+='<div class="note warn">Esperando jugadores. Compartí el link para que entren los demás.</div>';
   else h+=ms.map(matchCard).join("");
   h+='<div class="row" style="margin-top:12px"><button class="btn p" id="goCard">Cargar golpes</button><button class="btn" id="share">Compartir link</button></div>';
-  h+='<h2>Golpes por jugador</h2><p class="sub">'+esc(MODES[S.game.mode].help)+'</p>'+hcTable();
+  h+='<h2>Golpes por jugador</h2>'+hcTable();
   h+='<h2>Totales</h2>'+totalsTable();
   h+='<button class="btn w" id="copyRes">Copiar resultado para WhatsApp</button>';
   return h;
@@ -400,9 +461,7 @@ function copy(t){
   function fb(){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("Copiado");}catch(e){toast("No se pudo copiar");}a.remove();}
 }
 function wirePartido(){
-  $("modeSeg").onclick=function(e){var b=e.target.closest("button");if(!b)return;var m=b.getAttribute("data-m");if(m===S.game.mode)return;
-    if(!confirm(m==="match_pairs"?"¿Pasar a match por parejas (90%)?":"¿Pasar a match individual (100%)?"))return;
-    rpc("pm_game_update",{p_code:S.code,p_token:myTok().token,p_mode:m,p_allowance:MODES[m].allow}).then(function(){toast("Modalidad cambiada");poll();}).catch(function(e){toast(e.message);});};
+  wirePanel(true);
   $("goCard").onclick=function(){setTab("tarjeta");};
   $("share").onclick=function(){var u=location.origin+location.pathname+"?p="+S.code,t="Entrá al partido: "+u;
     if(navigator.share)navigator.share({title:"Partido de golf",text:t,url:u}).catch(function(){});else copy(u);};
@@ -466,27 +525,27 @@ function jugadoresView(){
   '<h2>Agregar jugador</h2><p class="sub">Para alguien que no carga desde su celular.</p><div class="card"><div class="row"><label class="f"><span>Nombre</span><input id="aName"></label><label class="f" style="flex:0 0 90px"><span>HI</span><input id="aHi" inputmode="decimal"></label></div>'+
   '<div class="row"><label class="f"><span>Salida</span><select id="aTee">'+teeOptions(defaultTee())+'</select></label>'+(pairs?'<label class="f"><span>Pareja</span><select id="aTeam"><option>A</option><option>B</option></select></label>':'')+'</div>'+
   '<button class="btn p w" id="aGo">Agregar</button></div>'+
-  '<h2>Partido</h2><div class="card"><label class="f"><span>Modalidad</span><select id="gMode"><option value="match_ind"'+(S.game.mode==="match_ind"?" selected":"")+'>'+MODES.match_ind.name+'</option><option value="match_pairs"'+(pairs?" selected":"")+'>'+MODES.match_pairs.name+'</option></select></label>'+
+  '<h2>Porcentaje de handicap</h2><div class="card">'+
   '<label class="f"><span>Porcentaje de handicap</span><input id="gAllow" inputmode="numeric" value="'+Math.round(allow()*100)+'"></label>'+
-  '<button class="btn w" id="gSave">Guardar cambios del partido</button></div>'+
+  '<button class="btn w" id="gSave">Guardar porcentaje</button></div>'+
   '<button class="btn w d" id="leave">Salir del partido en este celular</button>';
 }
 function wireJugadores(){
   var t=myTok();
+  document.querySelectorAll("#view input,#view select").forEach(function(e){e.addEventListener("input",function(){S.dirty=true;});});
   document.querySelectorAll("[data-team]").forEach(function(seg){seg.onclick=function(e){var b=e.target.closest("button");if(!b)return;seg.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});};});
   document.querySelectorAll("[data-save]").forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-save");
     function f(k){var e=document.querySelector('[data-p="'+id+'"][data-f="'+k+'"]');return e?e.value.trim():"";}
     var tb=document.querySelector('[data-team="'+id+'"] [aria-pressed=true]'),ch=f("ch_manual"),hi=num(f("hi"));
     rpc("pm_player_update",{p_code:S.code,p_token:t.token,p_player:id,p_name:f("name"),p_hi:isFinite(hi)?hi:null,p_tee:f("tee"),p_team:tb?tb.getAttribute("data-v"):null,p_ch_manual:ch===""?null:parseInt(ch,10)})
-    .then(function(){toast("Guardado");poll();}).catch(function(e){toast(e.message);});};});
+    .then(function(){toast("Guardado");S.dirty=false;poll();}).catch(function(e){toast(e.message);});};});
   document.querySelectorAll("[data-del]").forEach(function(b){b.onclick=function(){if(!confirm("¿Quitar a este jugador y sus golpes?"))return;
     rpc("pm_player_remove",{p_code:S.code,p_token:t.token,p_player:b.getAttribute("data-del")}).then(function(){toast("Quitado");poll();}).catch(function(e){toast(e.message);});};});
   $("aGo").onclick=function(){var n=$("aName").value.trim(),hi=num($("aHi").value);if(!n||!isFinite(hi)){toast("Nombre y handicap");return;}
     rpc("pm_player_add",{p_code:S.code,p_token:t.token,p_name:n,p_hi:hi,p_tee:$("aTee").value,p_team:$("aTeam")?$("aTeam").value:"A"})
     .then(function(){toast("Agregado");$("aName").value="";$("aHi").value="";poll();}).catch(function(e){toast(e.message);});};
   $("gSave").onclick=function(){var a=parseInt($("gAllow").value,10);if(!(a>0&&a<=100)){toast("Porcentaje entre 1 y 100");return;}
-    rpc("pm_game_update",{p_code:S.code,p_token:t.token,p_mode:$("gMode").value,p_allowance:a/100}).then(function(){toast("Guardado");poll();}).catch(function(e){toast(e.message);});};
-  $("gMode").onchange=function(){$("gAllow").value=Math.round(MODES[this.value].allow*100);};
+    rpc("pm_game_update",{p_code:S.code,p_token:t.token,p_mode:S.game.mode,p_allowance:a/100}).then(function(){toast("Guardado");S.dirty=false;poll();}).catch(function(e){toast(e.message);});};
   $("leave").onclick=function(){if(!confirm("¿Salir en este celular? Tus golpes quedan guardados."))return;ls(tokKey(),{});S.me=null;render();};
 }
 
